@@ -75,3 +75,16 @@ test('loadData reports fetch, HTTP and JSON failures readably', async () => {
   const { report } = await loadData('x', async () => ({ ok: true, json: async () => fixture() }));
   assert.equal(report.ok, true);
 });
+
+test('reduced: optional; indices must be integers in range pointing at vowels', () => {
+  const d = fixture();
+  d.words.find((w) => w.word === 'pizza').reduced = [4];
+  assert.deepEqual(validateData(d).errors, []);
+  for (const [bad, re] of [[[5], /not a phoneme index/], [[-1], /not a phoneme index/], [[1.5], /not a phoneme index/], [[0], /"p" \(index 0\), which is not a vowel/], ['4', /must be an array/]]) {
+    const x = fixture();
+    x.words.find((w) => w.word === 'pizza').reduced = bad;
+    const r = validateData(x);
+    assert.equal(r.ok, false, JSON.stringify(bad));
+    assert.ok(r.errors.some((e) => re.test(e)), r.errors.join('\n'));
+  }
+});

@@ -47,6 +47,31 @@ test('round rules hold on the real data for every target', { skip }, () => {
   }
 });
 
+test('a right answer always has the target as a full (not reduced) sound; no u-round accepts a reduced-vowel word', { skip }, () => {
+  const data = JSON.parse(readFileSync(FILE, 'utf8'));
+  const words = new Map(data.words.map((w) => [w.word, w]));
+  const reducedU = new Set(data.words.filter((w) => (w.reduced || []).some((i) => w.phonemes[i] === 'u')
+    && !w.phonemes.some((p, i) => p === 'u' && !(w.reduced || []).includes(i))).map((w) => w.word));
+  assert.ok(reducedU.has('apple') && reducedU.has('banana') && reducedU.has('giraffe'), 'the data marks schwa words');
+  const eligible = L.targetEligibleIds(data);
+  for (const target of data.sounds.filter((s) => eligible.has(s.id))) {
+    const mode = L.positionMode(data, target.id);
+    for (const w of L.wordsWithSound(data, target.id, mode)) {
+      const idx = mode === 'start' ? [0] : mode === 'end' ? [w.phonemes.length - 1] : w.phonemes.map((p, i) => (p === target.id ? i : -1)).filter((i) => i >= 0);
+      assert.ok(idx.some((i) => w.phonemes[i] === target.id && !(w.reduced || []).includes(i)), `${target.id}: ${w.word}`);
+    }
+    for (const status of ['learning', 'solid']) {
+      for (let seed = 1; seed <= (target.id === 'u' ? 400 : 20); seed++) {
+        const ans = L.pickPictureChoices({ data, target, targetStatus: status, n: 3, rng: L.mulberry32(seed) }).find((c) => c.correct);
+        if (target.id === 'u') assert.ok(!reducedU.has(ans.word), `u round answered by ${ans.word}`);
+        assert.ok(L.hasSoundAt(words.get(ans.word), target.id, mode));
+      }
+    }
+  }
+  const uAnswers = L.wordsWithSound(data, 'u', L.positionMode(data, 'u')).map((w) => w.word);
+  for (const wd of ['apple', 'needle', 'eagle', 'banana', 'balloon', 'giraffe']) assert.ok(!uAnswers.includes(wd), wd);
+});
+
 test('the app loads the real data by default and plays a session', { skip }, async () => {
   const data = JSON.parse(readFileSync(FILE, 'utf8'));
   const group1 = data.sounds.filter((s) => s.group === 1).map((s) => s.id);

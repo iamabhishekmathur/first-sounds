@@ -4,6 +4,15 @@ import { soundModes } from './logic.js';
 
 const KINDS = new Set(['continuous', 'stop']);
 
+/**
+ * Vowel sound ids, for checking `reduced` (a word's unstressed reduced vowels must be vowels). The
+ * schema has no vowel flag, so this lists the vowel ids used by this app's data and fixtures.
+ */
+export const VOWEL_IDS = new Set([
+  'a', 'e', 'i', 'o', 'u', 'ae', 'ai', 'ee', 'ie', 'igh', 'oe', 'oa', 'ue', 'oo', 'oo_short', 'yoo',
+  'ow', 'oi', 'ar', 'or', 'er', 'air', 'ear',
+]);
+
 const isStr = (v) => typeof v === 'string' && v.trim().length > 0;
 
 /**
@@ -74,6 +83,22 @@ export function validateData(d) {
     } else {
       for (const p of w.phonemes) {
         if (!ids.has(p)) errors.push(`${at}.phonemes has unknown sound id ${JSON.stringify(p)}.`);
+      }
+      if (w.reduced !== undefined) {
+        if (!Array.isArray(w.reduced)) errors.push(`${at}.reduced must be an array of phoneme indices.`);
+        else {
+          const seen = new Set();
+          for (const i of w.reduced) {
+            if (!Number.isInteger(i) || i < 0 || i >= w.phonemes.length) {
+              errors.push(`${at}.reduced has ${JSON.stringify(i)}, which is not a phoneme index (0 to ${w.phonemes.length - 1}).`);
+            } else if (!VOWEL_IDS.has(w.phonemes[i])) {
+              errors.push(`${at}.reduced points at "${w.phonemes[i]}" (index ${i}), which is not a vowel.`);
+            } else if (seen.has(i)) {
+              warnings.push(`${at}.reduced lists index ${i} twice.`);
+            }
+            seen.add(i);
+          }
+        }
       }
     }
   });

@@ -57,18 +57,40 @@ export function wordsStartingWith(data, id) {
 export const lastPhoneme = (w) => w.phonemes[w.phonemes.length - 1];
 
 /** Does the word have sound `id` in position `mode` ('start' | 'end' | 'anywhere')? */
+/**
+ * Is phoneme index i of the word an unstressed reduced vowel (schwa)? The data lists them in the
+ * optional `reduced` field. Such a position is not the vowel the parent recorded ("uh" in "apple" is
+ * not the u of "sun"), so it never makes a word a right answer and never counts towards a mode.
+ */
+export const isReduced = (word, i) => Array.isArray(word.reduced) && word.reduced.includes(i);
+
+/** Indices of the word's phonemes that are full (not reduced) sounds. */
+const fullAt = (word, i) => !isReduced(word, i);
+
+/**
+ * Does the word have sound `id` in position `mode` ('start' | 'end' | 'anywhere'), counting only
+ * full (not reduced) positions? Used for right answers and modes. Distractors use the stricter
+ * "contains the sound at all" (see pickPictureChoices).
+ */
 export function hasSoundAt(word, id, mode) {
-  if (mode === 'end') return lastPhoneme(word) === id;
-  if (mode === 'anywhere') return word.phonemes.includes(id);
-  return word.phonemes[0] === id;
+  const last = word.phonemes.length - 1;
+  if (mode === 'end') return word.phonemes[last] === id && fullAt(word, last);
+  if (mode === 'anywhere') return word.phonemes.some((p, i) => p === id && fullAt(word, i));
+  return word.phonemes[0] === id && fullAt(word, 0);
 }
 
-/** The sound a word "represents" when position `mode` is tested: its first or last sound (none for 'anywhere'). */
+/**
+ * The sound a word "represents" when position `mode` is tested: its first or last sound (none for
+ * 'anywhere', or when that position is a reduced vowel).
+ */
 export function soundAt(word, mode) {
-  if (mode === 'end') return lastPhoneme(word);
   if (mode === 'anywhere') return null;
-  return word.phonemes[0];
+  const i = mode === 'end' ? word.phonemes.length - 1 : 0;
+  return fullAt(word, i) ? word.phonemes[i] : null;
 }
+
+/** The phoneme at the tested position whatever its stress (for the confusable rule and grouping). */
+const phonemeAt = (word, mode) => (mode === 'end' ? lastPhoneme(word) : word.phonemes[0]);
 
 export function wordsWithSound(data, id, mode) {
   return data.words.filter((w) => hasSoundAt(w, id, mode));
@@ -92,9 +114,11 @@ export function soundModes(data) {
   const inc = (m, k) => m.set(k, (m.get(k) || 0) + 1);
   for (const w of data.words) {
     if (!Array.isArray(w.phonemes) || !w.phonemes.length) continue;
-    inc(start, w.phonemes[0]);
-    inc(end, lastPhoneme(w));
-    for (const p of new Set(w.phonemes)) inc(any, p);
+    // Only full (not reduced) positions count.
+    const last = w.phonemes.length - 1;
+    if (fullAt(w, 0)) inc(start, w.phonemes[0]);
+    if (fullAt(w, last)) inc(end, w.phonemes[last]);
+    for (const p of new Set(w.phonemes.filter((_, i) => fullAt(w, i)))) inc(any, p);
   }
   const map = new Map();
   for (const s of data.sounds) {
@@ -297,7 +321,7 @@ export function pickPictureChoices({ data, target, targetStatus, n, rng, avoidWo
   const blocked = blockedIds(data, target, targetStatus);
   const clear = (w) => (position === 'anywhere'
     ? !w.phonemes.some((p) => blocked.has(p))
-    : !blocked.has(soundAt(w, position)));
+    : !blocked.has(phonemeAt(w, position)));
   // Sounds shown with the same letters as the target (th_unvoiced / th_voiced) are kept out of the
   // whole word too, like the target itself.
   const twins = new Set(data.sounds.filter((x) => displayGrapheme(x) === displayGrapheme(target)).map((x) => x.id));

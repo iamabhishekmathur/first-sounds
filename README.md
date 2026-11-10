@@ -187,9 +187,18 @@ a sound when that sound is `phonemes[0]` and "ends with" it when it is the last 
 `graphemes[0]` is the letter shown to the child. Two sounds that show the same `graphemes[0]` (such
 as `th_unvoiced` and `th_voiced`) are never offered in the same round.
 
+**Reduced vowels.** A word may have `"reduced": [index, ...]`: the indices (from 0) of its
+unstressed reduced vowels, such as the schwa written `u` in apple (`a p u l`, `[2]`), banana
+(`b u n a n u`, `[1, 5]`) or television (`[3, 7]`). The validator checks that each index is a whole
+number within the phonemes and points at a vowel (the vowel ids are listed in `js/data.js`). A
+reduced position never makes a word a right answer and never counts towards a mode, so a "u" round
+(the parent's "uh" as in sun) never accepts apple or giraffe. Distractors still must not contain the
+target anywhere, reduced or not. Full but unstressed vowels (the final ee of puppy, the oe of
+window) and the unstressed er of tiger are not marked.
+
 **Position modes.** Each sound gets a mode, worked out from the words (never from the sound id), in
 the order children develop the skill: `start` if at least 4 words start with it, otherwise `end` if
-at least 4 end with it, otherwise `anywhere` if at least 4 contain it. A sound with fewer than 4 words
+at least 4 end with it, otherwise `anywhere` if at least 4 contain it (reduced positions excluded). A sound with fewer than 4 words
 containing it is not a game target. The parent prompt names the mode ("…the picture that starts with
 this sound", "…ends with this sound", "…has this sound in it"), in Hear it and in See it's
 letter-to-picture rounds. The studio, Progress and Tracker show each sound's mode, or why it is not a

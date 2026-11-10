@@ -168,3 +168,39 @@ test('migration: a child who has played keeps playing when a new group 1 target 
   assert.equal(L.canPlay(data, rec, { s1: { m: [{ c: 1, d: 'd1' }] }, s2: {} }), true);
   assert.equal(L.canPlay(data, new Set(['m', 's', 'ng', 'ue'])), true);
 });
+
+/* ---------- reduced (unstressed) vowels ---------- */
+
+const red = (word, phonemes, reduced) => ({ word, emoji: word, phonemes, reduced });
+
+test('reduced vowels never make a right answer and do not count towards a mode', () => {
+  // "uh" written as u: sun and bus have the full vowel; apple, pizza, banana, lemon only a reduced one.
+  const words = [
+    w('sun', ['s', 'u', 'n']), w('bus', ['b', 'u', 's']), w('cup', ['k', 'u', 'p']),
+    red('apple', ['a', 'p', 'u', 'l'], [2]), red('pizza', ['p', 'ee', 't', 's', 'u'], [4]),
+    red('banana', ['b', 'u', 'n', 'a', 'n', 'u'], [1, 5]), red('lemon', ['l', 'e', 'm', 'u', 'n'], [3]),
+    red('umbrella', ['u', 'm', 'b', 'r', 'e', 'l', 'u'], [6]),
+    w('fish', ['f', 'i', 'sh']), w('sock', ['s', 'o', 'k']), w('tree', ['t', 'r', 'ee']), w('ship', ['sh', 'i', 'p']),
+  ];
+  const d = { ...data, words };
+  const u = L.soundModes(d).get('u');
+  assert.deepEqual(u, { mode: 'anywhere', start: 1, end: 0, anywhere: 4 }, 'only sun, bus, cup and umbrella count');
+  assert.ok(!L.hasSoundAt(words[3], 'u', 'anywhere'));
+  assert.ok(!L.hasSoundAt(words[4], 'u', 'end'));
+  assert.ok(L.hasSoundAt(words[7], 'u', 'start'), 'umbrella starts with a full u');
+  assert.ok(!L.hasSoundAt(words[7], 'u', 'end'));
+  const target = { ...byId.get('u'), confusable: [] };
+  for (let seed = 1; seed <= 200; seed++) {
+    for (const mode of ['start', 'end', 'anywhere']) {
+      const ch = L.pickPictureChoices({ data: d, target, targetStatus: 'learning', n: 3, rng: L.mulberry32(seed), mode });
+      const ans = ch.find((c) => c.correct);
+      assert.ok(['sun', 'bus', 'cup', 'umbrella'].includes(ans.word), `${mode}: ${ans.word}`);
+      for (const c of ch.filter((x) => !x.correct)) {
+        assert.ok(!['apple', 'pizza', 'banana', 'lemon', 'umbrella'].includes(c.word), `${c.word} contains u (reduced) and must not be a distractor`);
+      }
+    }
+  }
+  // Too few full u words: not a target even though many words "contain u".
+  const few = { ...data, words: words.filter((x) => !['bus', 'cup'].includes(x.word)) };
+  assert.equal(L.positionMode(few, 'u'), null);
+});
