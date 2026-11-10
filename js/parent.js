@@ -3,13 +3,30 @@
 import { h, mount, setMode, notice } from './ui.js';
 import {
   canPlay, groupProgress, statusOf, targetEligibleIds, unlockedGroups,
-  readinessByDate, readinessPassedDays, wordsStartingWith,
+  readinessByDate, readinessPassedDays, soundModes, MIN_WORDS_FOR_MODE,
 } from './logic.js';
 import * as audio from './audio.js';
 import { checkBackup } from './storage.js';
 import { STATUS_TEXT } from './sync.js';
 
 const STATUS_LABEL = { not_started: 'not started', learning: 'learning', solid: 'solid' };
+
+/** Short names of the position modes, for the parent. */
+export const MODE_LABEL = { start: 'starts with', end: 'ends with', anywhere: 'anywhere in the word' };
+
+/** One line about a sound's position mode, or why it is not a game target. */
+export function modeLine(data, id) {
+  const m = soundModes(data).get(id);
+  if (!m) return '';
+  if (m.mode === 'start') return `Game: find the picture that starts with this sound (${m.start} picture words start with it).`;
+  if (m.mode === 'end') return `Game: find the picture that ends with this sound (fewer than ${MIN_WORDS_FOR_MODE} words start with it, ${m.end} end with it).`;
+  if (m.mode === 'anywhere') return `Game: find the picture that has this sound in it (${m.anywhere} picture words have it, but fewer than ${MIN_WORDS_FOR_MODE} start or end with it).`;
+  return notTargetReason(m);
+}
+
+export function notTargetReason(m) {
+  return `Not a game target yet: it needs at least ${MIN_WORDS_FOR_MODE} picture words with this sound, and ${m.anywhere === 0 ? 'none have it' : `only ${m.anywhere} ${m.anywhere === 1 ? 'has' : 'have'} it`}.`;
+}
 
 /* ---------- sync status (parent screens only) ---------- */
 
@@ -144,7 +161,7 @@ export function welcome(app) {
 
 export function menu(app) {
   const groups = groupProgress(app.data, app.recorded());
-  const playable = canPlay(app.data, app.recorded());
+  const playable = canPlay(app.data, app.recorded(), app.progress);
   const passed = readinessPassedDays(app.readiness);
   const tile = (label, sub, onclick, testid) => h('button', { class: 'p-tile', type: 'button', onclick, 'data-testid': testid }, h('strong', {}, label), h('span', {}, sub));
   const recordedTotal = groups.reduce((n, g) => n + g.recorded, 0);
@@ -172,6 +189,8 @@ const MIC_HELP = {
   insecure: 'Recording only works when the app is opened from a secure (https://) address or from localhost.',
   error: 'Something went wrong with the microphone. Please try again.',
 };
+
+const MODE_TAG = { start: 'start', end: 'end', anywhere: 'anywhere', none: 'not a target' };
 
 export function studio(app, opts = {}) {
   const groups = groupProgress(app.data, app.recorded());
@@ -214,6 +233,7 @@ export function studio(app, opts = {}) {
       'data-sound': s.id, disabled: busy, 'aria-label': `${s.graphemes[0]} (${s.say})${app.recordings.has(s.id) ? ', recorded' : ''}`,
       onclick: () => { selected = s.id; message = null; render(); },
     }, h('span', { class: 'st-g' }, s.graphemes[0]), h('span', { class: 'st-say' }, s.say),
+    h('span', { class: `st-mode-tag mode-${soundModes(app.data).get(s.id).mode || 'none'}` }, MODE_TAG[soundModes(app.data).get(s.id).mode || 'none']),
     app.recordings.has(s.id) ? h('span', { class: 'st-check', 'aria-hidden': 'true' }, '✓') : null)));
 
     const recordLabel = state === 'recording' ? 'Stop' : state === 'starting' ? 'Starting…' : state === 'saving' ? 'Saving…' : rec ? 'Re-record' : 'Record';
@@ -222,9 +242,8 @@ export function studio(app, opts = {}) {
       h('p', { class: 'st-sayline' }, 'Say: ', h('strong', {}, sound.say)),
       h('p', { class: 'st-tip' }, sound.tip),
       h('p', { class: 'st-example' }, ex ? h('span', { class: 'st-ex-emoji' }, ex.emoji) : null, ' as in ', h('strong', {}, sound.exampleWord)),
-      !eligible.has(sound.id)
-        ? h('p', { class: 'st-note' }, `Fewer than 3 picture words start with this sound (${wordsStartingWith(app.data, sound.id).length}), so it is not a game target yet.`)
-        : null,
+      h('p', { class: eligible.has(sound.id) ? 'st-mode' : 'st-note', 'data-testid': 'studio-mode', 'data-mode': soundModes(app.data).get(sound.id).mode || 'none' },
+        modeLine(app.data, sound.id)),
       micError ? notice('error', h('strong', {}, 'Microphone problem. '), MIC_HELP[micError] || MIC_HELP.error) : null,
       h('div', { class: 'st-buttons' },
         h('button', {
@@ -240,7 +259,7 @@ export function studio(app, opts = {}) {
       message ? h('p', { class: `st-msg ${message.kind}`, 'data-testid': 'studio-msg' }, message.text) : null,
       rec ? h('p', { class: 'st-meta' }, rec.trimmed ? `Saved, ${(rec.durationMs / 1000).toFixed(1)} s after trimming silence.` : 'Saved (silence could not be trimmed on this device).') : null);
 
-    const after = canPlay(app.data, app.recorded())
+    const after = canPlay(app.data, app.recorded(), app.progress)
       ? h('div', { class: 'p-actions' }, h('button', { class: 'p-btn primary', type: 'button', 'data-testid': 'go-play', disabled: busy, onclick: () => app.go('home') }, 'Go to the child screen'))
       : null;
 
@@ -327,23 +346,26 @@ export function studio(app, opts = {}) {
 
 export function progressView(app) {
   const eligible = targetEligibleIds(app.data);
+  const modes = soundModes(app.data);
   const chip = (st, testid) => h('span', { class: `chip ${st}`, 'data-testid': testid }, STATUS_LABEL[st]);
   const groups = groupProgress(app.data, app.recorded());
   const table = h('table', { class: 'p-table' },
-    h('thead', {}, h('tr', {}, h('th', {}, 'Sound'), h('th', {}, 'Recorded'), h('th', {}, 'Hear it'), h('th', {}, 'See it'))),
+    h('thead', {}, h('tr', {}, h('th', {}, 'Sound'), h('th', {}, 'Recorded'), h('th', {}, 'Mode'), h('th', {}, 'Hear it'), h('th', {}, 'See it'))),
     groups.map((g) => h('tbody', {},
-      h('tr', { class: 'p-group-row' }, h('th', { colspan: '4' }, `Group ${g.group}`)),
+      h('tr', { class: 'p-group-row' }, h('th', { colspan: '5' }, `Group ${g.group}`)),
       g.sounds.map((s) => h('tr', { 'data-sound': s.id },
         h('td', {}, h('span', { class: 'p-g' }, s.graphemes[0]), ' ', h('small', {}, s.say)),
         h('td', {}, app.recordings.has(s.id) ? 'yes' : 'no'),
         eligible.has(s.id)
-          ? [h('td', {}, chip(statusOf(app.progress, 1, s.id), `s1-${s.id}`)), h('td', {}, chip(statusOf(app.progress, 2, s.id), `s2-${s.id}`))]
-          : h('td', { colspan: '2', class: 'p-muted' }, 'not a game target yet (fewer than 3 picture words)'))))));
+          ? [h('td', { 'data-testid': `mode-${s.id}` }, MODE_LABEL[modes.get(s.id).mode]),
+            h('td', {}, chip(statusOf(app.progress, 1, s.id), `s1-${s.id}`)), h('td', {}, chip(statusOf(app.progress, 2, s.id), `s2-${s.id}`))]
+          : h('td', { colspan: '3', class: 'p-muted', 'data-testid': `mode-${s.id}` }, notTargetReason(modes.get(s.id))))))));
 
   const byDate = readinessByDate(app.readiness);
   const passed = readinessPassedDays(app.readiness);
   page('progress', 'Progress', { back: { label: 'Parent area', go: () => app.go('parentMenu') } },
     h('p', { class: 'p-sub' }, 'A sound is solid when at least 5 of its last 6 rounds were right first time, across at least 2 different days. "See it" opens for a sound once it is solid in "Hear it".'),
+    h('p', { class: 'p-sub' }, `Mode is where the sound is in the picture word your child looks for: at the start when at least ${MIN_WORDS_FOR_MODE} picture words start with it, otherwise at the end, otherwise anywhere in the word. It is worked out from the word list.`),
     passed >= 3 ? notice('good', `Passed the readiness check on ${passed} different days: your child may be ready for blending (a later version).`) : null,
     h('h2', {}, 'Sounds'),
     table,

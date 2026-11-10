@@ -11,6 +11,7 @@ const learningHist = H([[1, 'd1'], [0, 'd1']]);
 const progressWith = (s1 = {}, s2 = {}) => ({ s1, s2 });
 const all = (ids, hist) => Object.fromEntries(ids.map((id) => [id, hist]));
 const G1 = ['m', 's', 'a', 't'];
+const words = new Map(data.words.map((w) => [w.word, w]));
 
 /* ---------- mastery ---------- */
 
@@ -54,12 +55,14 @@ test('choiceCount: 2 normally, 3 once going well', () => {
 
 test('target eligibility is derived from word counts, not ids', () => {
   const e = L.targetEligibleIds(data);
-  assert.ok(e.has('m') && e.has('th_unvoiced') && e.has('th_voiced'));
-  assert.ok(!e.has('ng'), 'no words start with ng');
-  assert.ok(!e.has('r'), 'only one word starts with r');
-  // Add two more r words and r becomes a target.
-  const more = { ...data, words: [...data.words, { word: 'rat', emoji: '🐀', phonemes: ['r', 'a', 't'] }, { word: 'rose', emoji: '🌹', phonemes: ['r', 'oa', 'z'] }] };
-  assert.ok(L.targetEligibleIds(more).has('r'));
+  assert.ok(e.has('m') && e.has('a') && e.has('th_unvoiced'));
+  assert.ok(!e.has('th_voiced'), 'only 3 words have th_voiced');
+  assert.ok(!e.has('ng'), 'only 3 words have ng');
+  assert.ok(!e.has('f'), '3 words start with f and none end with it: fewer than 4 have it');
+  // Add one more f word and f becomes a start target.
+  const more = { ...data, words: [...data.words, { word: 'feet', emoji: '🦶', phonemes: ['f', 'ee', 't'] }] };
+  assert.ok(L.targetEligibleIds(more).has('f'));
+  assert.equal(L.positionMode(more, 'f'), 'start');
 });
 
 test('introOrder is group order, then file order', () => {
@@ -137,23 +140,28 @@ test('chooseTarget falls back to review when everything is solid', () => {
 
 /* ---------- distractors ---------- */
 
-test('picture choices: one answer, distractors never start with the target, its grapheme twin, or confusables while learning', () => {
+test('picture choices: one answer, distractors never contain the target, its grapheme twin, or (at the tested position) confusables while learning', () => {
   for (const target of data.sounds.filter((s) => L.targetEligibleIds(data).has(s.id))) {
+    const mode = L.positionMode(data, target.id);
+    const twins = new Set(data.sounds.filter((s) => s.graphemes[0] === target.graphemes[0]).map((s) => s.id));
     const conf = new Set([...target.confusable, ...data.sounds.filter((s) => s.confusable.includes(target.id)).map((s) => s.id)]);
     for (let seed = 1; seed <= 60; seed++) {
       const choices = L.pickPictureChoices({ data, target, targetStatus: 'learning', n: 3, rng: L.mulberry32(seed) });
-      assert.equal(choices.length, 3);
+      assert.equal(choices.length, 3, `${target.id} (${mode}): 3 choices`);
       const answers = choices.filter((c) => c.correct);
       assert.equal(answers.length, 1);
       assert.equal(answers[0].soundId, target.id);
-      const firsts = new Set();
+      assert.ok(L.hasSoundAt(words.get(answers[0].word), target.id, mode), `${target.id}: answer ${answers[0].word} has it at ${mode}`);
+      const keys = new Set();
       for (const c of choices.filter((x) => !x.correct)) {
-        assert.notEqual(c.soundId, target.id);
-        assert.notEqual(byId.get(c.soundId).graphemes[0], target.graphemes[0], `${target.id}: ${c.word}`);
-        assert.ok(!conf.has(c.soundId), `${target.id} learning got confusable ${c.word}`);
-        firsts.add(c.soundId);
+        const w = words.get(c.word);
+        assert.ok(!w.phonemes.some((p) => twins.has(p)), `${target.id}: ${c.word} contains the target or its twin`);
+        const tested = mode === 'anywhere' ? w.phonemes : [L.soundAt(w, mode)];
+        assert.ok(!tested.some((p) => conf.has(p)), `${target.id} learning got confusable ${c.word}`);
+        assert.equal(c.soundId, L.soundAt(w, mode));
+        keys.add(mode === 'end' ? L.lastPhoneme(w) : w.phonemes[0]);
       }
-      assert.equal(firsts.size, 2, 'distractors start with different sounds');
+      assert.equal(keys.size, 2, 'distractors differ in the tested position');
       assert.equal(new Set(choices.map((c) => c.emoji)).size, 3, 'no repeated pictures');
     }
   }
@@ -217,7 +225,7 @@ test('distinct displayed graphemes even when two sounds share one (custom data)'
 
 /* ---------- planning rounds ---------- */
 
-test('planRound: stage 1 only until a sound is solid; never targets sounds with < 3 words', () => {
+test('planRound: stage 1 only until a sound is solid; never targets sounds without a position mode', () => {
   const rec = new Set(data.sounds.map((s) => s.id));
   for (let seed = 1; seed <= 100; seed++) {
     const r = L.planRound({ data, recorded: rec, progress: progressWith(), rng: L.mulberry32(seed) });

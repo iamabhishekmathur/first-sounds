@@ -1,5 +1,7 @@
 // Content data: loading and schema validation. No DOM here, so it runs in Node tests too.
 
+import { soundModes } from './logic.js';
+
 const KINDS = new Set(['continuous', 'stop']);
 
 const isStr = (v) => typeof v === 'string' && v.trim().length > 0;
@@ -98,9 +100,10 @@ export function validateData(d) {
 
 /** Short facts about the data, for the parent and the report. */
 export function describeData(d) {
-  const starts = new Map();
-  for (const w of d.words) starts.set(w.phonemes[0], (starts.get(w.phonemes[0]) || 0) + 1);
-  const nonTargets = d.sounds.filter((s) => (starts.get(s.id) || 0) < 3).map((s) => s.id);
+  const modes = soundModes(d);
+  const nonTargets = d.sounds.filter((s) => !modes.get(s.id).mode).map((s) => s.id);
+  const byMode = { start: [], end: [], anywhere: [] };
+  for (const s of d.sounds) { const m = modes.get(s.id).mode; if (m) byMode[m].push(s.id); }
   const byGrapheme = new Map();
   for (const s of d.sounds) {
     const g = s.graphemes[0];
@@ -112,6 +115,7 @@ export function describeData(d) {
     words: d.words.length,
     groups: [...new Set(d.sounds.map((s) => s.group))].sort((a, b) => a - b),
     nonTargets,
+    modes: byMode,
     sharedGraphemes: shared.map(([g, v]) => `${g}: ${v.join(', ')}`),
     readinessPairs: (d.readinessPairs || []).length,
   };

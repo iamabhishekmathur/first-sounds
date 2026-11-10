@@ -340,3 +340,9 @@ button:focus-visible { outline: 4px solid var(--accent); outline-offset: 4px; }
 .p-sync[data-status="synced"] { background: var(--good-soft); color: #1c4d30; }
 .p-sync[data-status="offline"], .p-sync[data-status="error"], .p-sync[data-status="wrong-code"] { background: var(--warn-soft); color: #5c3b00; }
 .p-input { min-height: 48px; min-width: 0; flex: 1 1 260px; max-width: 420px; padding: 8px 14px; border: 2px solid var(--line); border-radius: 14px; font: inherit; font-size: 18px; background: #fff; }
+
+/* ---------- position modes (studio) ---------- */
+.st-mode { font-size: 15px; margin: 6px 0; }
+.st-mode-tag { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+.st-mode-tag.mode-none { font-style: italic; text-transform: none; letter-spacing: 0; }
+

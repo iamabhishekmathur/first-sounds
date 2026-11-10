@@ -43,6 +43,7 @@
     { "word": "star", "emoji": "⭐", "phonemes": ["s", "t", "ar"] },
     { "word": "apple", "emoji": "🍎", "phonemes": ["a", "p", "l"] },
     { "word": "ant", "emoji": "🐜", "phonemes": ["a", "n", "t"] },
+    { "word": "axe", "emoji": "🪓", "phonemes": ["a", "k", "s"] },
     { "word": "alligator", "emoji": "🐊", "phonemes": ["a", "l", "i", "g", "ai", "t", "er"] },
     { "word": "tiger", "emoji": "🐯", "phonemes": ["t", "igh", "g", "er"] },
     { "word": "tooth", "emoji": "🦷", "phonemes": ["t", "ue", "th_unvoiced"] },

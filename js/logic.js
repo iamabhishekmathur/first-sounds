@@ -2,7 +2,11 @@
 // Randomness comes in as `rng` (a function returning [0,1)) and dates as 'YYYY-MM-DD' strings.
 
 export const HISTORY_KEEP = 12;
-export const MIN_WORDS_FOR_TARGET = 3;
+/** A sound needs at least this many words with it in a position to be tested in that position. */
+export const MIN_WORDS_FOR_MODE = 4;
+export const MIN_WORDS_FOR_TARGET = MIN_WORDS_FOR_MODE;
+/** Position modes, in the order children develop the skill. */
+export const POSITION_MODES = ['start', 'end', 'anywhere'];
 export const REVIEW_SHARE = 0.25;
 export const MAX_LEARNING_BEFORE_NEW = 3;
 export const MAX_NEW_PER_SESSION = 2;
@@ -48,11 +52,67 @@ export function wordsStartingWith(data, id) {
   return data.words.filter((w) => w.phonemes[0] === id);
 }
 
-/** Sounds usable as targets in stages 1 and 2: at least 3 words start with them. */
+export const lastPhoneme = (w) => w.phonemes[w.phonemes.length - 1];
+
+/** Does the word have sound `id` in position `mode` ('start' | 'end' | 'anywhere')? */
+export function hasSoundAt(word, id, mode) {
+  if (mode === 'end') return lastPhoneme(word) === id;
+  if (mode === 'anywhere') return word.phonemes.includes(id);
+  return word.phonemes[0] === id;
+}
+
+/** The sound a word "represents" when position `mode` is tested: its first or last sound (none for 'anywhere'). */
+export function soundAt(word, mode) {
+  if (mode === 'end') return lastPhoneme(word);
+  if (mode === 'anywhere') return null;
+  return word.phonemes[0];
+}
+
+export function wordsWithSound(data, id, mode) {
+  return data.words.filter((w) => hasSoundAt(w, id, mode));
+}
+
+const modeCache = new WeakMap();
+
+/**
+ * Each sound's position mode, worked out from the words (never from the sound id):
+ * 'start' if at least 4 words start with it, otherwise 'end' if at least 4 end with it, otherwise
+ * 'anywhere' if at least 4 contain it, otherwise null (not a game target).
+ * Returns Map id -> { mode, start, end, anywhere } (the counts explain the choice to the parent).
+ */
+export function soundModes(data) {
+  const cached = modeCache.get(data);
+  if (cached && cached.words === data.words && cached.sounds === data.sounds) return cached.map;
+  const count = () => new Map();
+  const start = count();
+  const end = count();
+  const any = count();
+  const inc = (m, k) => m.set(k, (m.get(k) || 0) + 1);
+  for (const w of data.words) {
+    if (!Array.isArray(w.phonemes) || !w.phonemes.length) continue;
+    inc(start, w.phonemes[0]);
+    inc(end, lastPhoneme(w));
+    for (const p of new Set(w.phonemes)) inc(any, p);
+  }
+  const map = new Map();
+  for (const s of data.sounds) {
+    const c = { start: start.get(s.id) || 0, end: end.get(s.id) || 0, anywhere: any.get(s.id) || 0 };
+    const mode = c.start >= MIN_WORDS_FOR_MODE ? 'start' : c.end >= MIN_WORDS_FOR_MODE ? 'end' : c.anywhere >= MIN_WORDS_FOR_MODE ? 'anywhere' : null;
+    map.set(s.id, { mode, ...c });
+  }
+  modeCache.set(data, { words: data.words, sounds: data.sounds, map });
+  return map;
+}
+
+/** The position mode of one sound, or null when it is not a game target. */
+export function positionMode(data, id) {
+  const m = soundModes(data).get(id);
+  return m ? m.mode : null;
+}
+
+/** Sounds usable as targets in stages 1 and 2: those with a position mode. */
 export function targetEligibleIds(data) {
-  const counts = new Map();
-  for (const w of data.words) counts.set(w.phonemes[0], (counts.get(w.phonemes[0]) || 0) + 1);
-  return new Set(data.sounds.filter((s) => (counts.get(s.id) || 0) >= MIN_WORDS_FOR_TARGET).map((s) => s.id));
+  return new Set([...soundModes(data)].filter(([, m]) => m.mode).map(([id]) => id));
 }
 
 /** Sounds in group order, then file order. */
@@ -107,16 +167,20 @@ export function choiceCount(history) {
 /**
  * Groups the child may play. The first group is always open. A later group opens once
  * every target-eligible sound of the previous group is recorded and solid in stage 1.
+ * A group the child has already played in (stage 1 history for one of its sounds, or for a sound of
+ * a later group) stays open, so a change to the data that adds targets to an earlier group (for
+ * example sounds that became targets through position modes) never locks the child out again.
  */
 export function unlockedGroups(data, recorded, progress) {
   const eligible = targetEligibleIds(data);
   const groups = [...new Set(data.sounds.map((s) => s.group))].sort((a, b) => a - b);
+  const played = (g) => data.sounds.some((s) => s.group >= g && historyOf(progress, 1, s.id).length > 0);
   const open = new Set();
   for (let i = 0; i < groups.length; i++) {
     if (i === 0) { open.add(groups[0]); continue; }
     const prev = data.sounds.filter((s) => s.group === groups[i - 1] && eligible.has(s.id));
     const prevDone = prev.every((s) => recorded.has(s.id) && statusOf(progress, 1, s.id) === 'solid');
-    if (!prevDone) break;
+    if (!prevDone && !played(groups[i])) break;
     open.add(groups[i]);
   }
   return open;
@@ -134,12 +198,18 @@ export function candidates(data, recorded, progress, stage) {
   );
 }
 
-/** The parent needs only the first group recorded (its target-eligible sounds) to start. */
-export function canPlay(data, recorded) {
+/**
+ * The parent needs only the first group recorded (its target-eligible sounds) to start. A child who
+ * has already played keeps playing while any recorded target is available, even if a data change
+ * made a not-yet-recorded sound of group 1 a target.
+ */
+export function canPlay(data, recorded, progress = null) {
   const eligible = targetEligibleIds(data);
   const first = Math.min(...data.sounds.map((s) => s.group));
   const needed = data.sounds.filter((s) => s.group === first && eligible.has(s.id));
-  return needed.length > 0 && needed.every((s) => recorded.has(s.id));
+  if (needed.length > 0 && needed.every((s) => recorded.has(s.id))) return true;
+  const playedBefore = progress && Object.values(progress.s1 || {}).some((h) => Array.isArray(h) && h.length);
+  return !!playedBefore && candidates(data, recorded, progress, 1).length > 0;
 }
 
 export function groupProgress(data, recorded) {
@@ -203,35 +273,57 @@ function confusableSet(data, target) {
 }
 
 /**
- * Picture choices: one word starting with the target, n-1 distractors each starting with a different,
- * allowed sound. Returns [{ kind:'word', word, emoji, soundId, correct }] in random order.
+ * Picture choices for position `mode` (default: the target's own mode). The answer has the target in
+ * that position. Each distractor:
+ * - never contains the target sound (or a sound shown with the same letters) anywhere in its
+ *   phonemes, in every mode;
+ * - has, in the tested position, none of the blocked sounds (its grapheme twin, and its confusable
+ *   sounds while the target is not solid; for 'anywhere' no blocked sound anywhere in the word);
+ * - has a different sound in the tested position from the other distractors.
+ * Returns [{ kind:'word', word, emoji, soundId, correct, position }] in random order. soundId is the
+ * sound the picture stands for in this round (the target for the answer; a distractor's first or
+ * last sound; null for an 'anywhere' distractor, which stands for no single sound).
  */
-export function pickPictureChoices({ data, target, targetStatus, n, rng, avoidWord = null }) {
-  const own = wordsStartingWith(data, target.id);
+export function pickPictureChoices({ data, target, targetStatus, n, rng, avoidWord = null, mode = null }) {
+  // A position with no words for this sound (only when asked for explicitly) falls back to anywhere.
+  let position = mode || positionMode(data, target.id) || 'start';
+  if (!wordsWithSound(data, target.id, position).length) position = 'anywhere';
+  const own = wordsWithSound(data, target.id, position);
+  if (!own.length) return [];
   const ownPool = own.length > 1 ? own.filter((w) => w.word !== avoidWord) : own;
   const answer = pick(ownPool, rng);
   const blocked = blockedIds(data, target, targetStatus);
-  const pool = data.words.filter((w) => !blocked.has(w.phonemes[0]) && w.emoji !== answer.emoji);
-  const byFirst = new Map();
-  for (const w of pool) byFirst.set(w.phonemes[0], [...(byFirst.get(w.phonemes[0]) || []), w]);
+  const clear = (w) => (position === 'anywhere'
+    ? !w.phonemes.some((p) => blocked.has(p))
+    : !blocked.has(soundAt(w, position)));
+  // Sounds shown with the same letters as the target (th_unvoiced / th_voiced) are kept out of the
+  // whole word too, like the target itself.
+  const twins = new Set(data.sounds.filter((x) => displayGrapheme(x) === displayGrapheme(target)).map((x) => x.id));
+  const pool = data.words.filter((w) => !w.phonemes.some((p) => twins.has(p)) && clear(w) && w.emoji !== answer.emoji);
+  const keyOf = (w) => (position === 'end' ? lastPhoneme(w) : w.phonemes[0]);
+  const byKey = new Map();
+  for (const w of pool) byKey.set(keyOf(w), [...(byKey.get(keyOf(w)) || []), w]);
 
-  let firsts = shuffle([...byFirst.keys()], rng);
+  let keys = shuffle([...byKey.keys()], rng);
   if (targetStatus === 'solid' && rng() < 0.5) {
     // Review rounds may be harder: put a confusable sound first when one is available.
     const conf = confusableSet(data, target);
-    firsts = [...firsts.filter((f) => conf.has(f)), ...firsts.filter((f) => !conf.has(f))];
+    const isConf = (k) => (position === 'anywhere' ? byKey.get(k).some((w) => w.phonemes.some((p) => conf.has(p))) : conf.has(k));
+    keys = [...keys.filter(isConf), ...keys.filter((k) => !isConf(k))];
   }
   const distractors = [];
   const usedEmoji = new Set([answer.emoji]);
-  for (const f of firsts) {
+  for (const k of keys) {
     if (distractors.length >= n - 1) break;
-    const options = byFirst.get(f).filter((w) => !usedEmoji.has(w.emoji));
+    const options = byKey.get(k).filter((w) => !usedEmoji.has(w.emoji));
     if (!options.length) continue;
     const w = pick(options, rng);
     usedEmoji.add(w.emoji);
     distractors.push(w);
   }
-  const toChoice = (w, correct) => ({ kind: 'word', word: w.word, emoji: w.emoji, soundId: w.phonemes[0], correct });
+  const toChoice = (w, correct) => ({
+    kind: 'word', word: w.word, emoji: w.emoji, soundId: correct ? target.id : soundAt(w, position), correct, position,
+  });
   return shuffle([toChoice(answer, true), ...distractors.map((w) => toChoice(w, false))], rng);
 }
 
@@ -270,7 +362,7 @@ function hasWork(cands, progress, stage) {
 
 /**
  * Plan the next round. Returns null when nothing is playable.
- * { stage: 1|2, mode: 'hear'|'see-letter'|'pick-letter', target, reason, choices }
+ * { stage: 1|2, mode: 'hear'|'see-letter'|'pick-letter', position: 'start'|'end'|'anywhere', target, reason, choices }
  */
 export function planRound({ data, recorded, progress, rng, lastId = null, lastWord = null, newCount = { 1: 0, 2: 0 } }) {
   const c1 = candidates(data, recorded, progress, 1);
@@ -291,12 +383,13 @@ export function planRound({ data, recorded, progress, rng, lastId = null, lastWo
   const target = chosen.sound;
   const targetStatus = statusOf(progress, stage, target.id);
   const n = choiceCount(historyOf(progress, stage, target.id));
-  const base = { stage, target, reason: chosen.reason, targetStatus };
+  const position = positionMode(data, target.id) || 'start';
+  const base = { stage, target, reason: chosen.reason, targetStatus, position };
   if (stage === 1) {
-    return { ...base, mode: 'hear', choices: pickPictureChoices({ data, target, targetStatus, n, rng, avoidWord: lastWord }) };
+    return { ...base, mode: 'hear', choices: pickPictureChoices({ data, target, targetStatus, n, rng, avoidWord: lastWord, mode: position }) };
   }
   if (rng() < 0.5) {
-    return { ...base, mode: 'see-letter', choices: pickPictureChoices({ data, target, targetStatus, n, rng, avoidWord: lastWord }) };
+    return { ...base, mode: 'see-letter', choices: pickPictureChoices({ data, target, targetStatus, n, rng, avoidWord: lastWord, mode: position }) };
   }
   return { ...base, mode: 'pick-letter', choices: pickLetterChoices({ data, target, targetStatus, n, rng, preferIds: recorded }) };
 }

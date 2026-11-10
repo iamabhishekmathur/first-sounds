@@ -8,6 +8,10 @@ import { newId } from './syncdoc.js';
 
 const RESOLVE_DELAY = 2200;
 
+/** How the parent prompt names each position mode ("…tap the picture that <phrase>."). */
+export const POSITION_PHRASE = { start: 'starts with this sound', end: 'ends with this sound', anywhere: 'has this sound in it' };
+
+
 function topbar(app, s) {
   const gate = holdGate(() => app.go('parentMenu'));
   const dots = s
@@ -23,7 +27,7 @@ function prompt(text, ...extra) {
 
 export function home(app) {
   setMode('child');
-  const playable = canPlay(app.data, app.recorded());
+  const playable = canPlay(app.data, app.recorded(), app.progress);
   const body = playable
     ? h('button', { class: 'big-play', type: 'button', 'aria-label': 'Play', 'data-testid': 'play', onclick: () => startSession(app) }, icon('play'))
     : h('div', { class: 'home-wait', 'aria-hidden': 'true' }, '🎙️');
@@ -130,20 +134,21 @@ function renderRound(app, s, round) {
       onclick: () => { lead.classList.remove('invite'); playTarget(); },
     }, h('span', { class: 'letter' }, round.target.graphemes[0]));
     lead.classList.add('invite');
-    text = 'Tap the letter to hear it, then find the picture that starts with it.';
+    text = `Tap the letter to hear it, then find the picture that ${POSITION_PHRASE[round.position] || POSITION_PHRASE.start}.`;
   } else {
     lead = h('button', {
       class: 'replay', type: 'button', 'data-testid': 'replay', 'aria-label': 'hear the sound again',
       onclick: () => playTarget(),
     }, icon('speaker'));
     text = round.mode === 'hear'
-      ? 'Listen, then tap the picture that starts with this sound.'
+      ? `Listen, then tap the picture that ${POSITION_PHRASE[round.position] || POSITION_PHRASE.start}.`
       : 'Listen, then tap the letter that makes this sound.';
   }
 
   const screen = h('section', {
     class: `screen child round mode-${round.mode}`,
     'data-screen': 'round', 'data-stage': String(round.stage), 'data-mode': round.mode, 'data-target': round.target.id,
+    'data-position': round.position,
   },
   topbar(app, s),
   h('div', { class: 'play-area' }, h('div', { class: 'lead' }, lead), h('div', { class: `choices n${choiceEls.length}` }, choiceEls)),

@@ -1,0 +1,596 @@
+{
+ "version": 1,
+ "sounds": [
+  {
+   "id": "m",
+   "graphemes": [
+    "m"
+   ],
+   "group": 1,
+   "kind": "continuous",
+   "say": "mmm",
+   "tip": "Hum it with lips closed: mmm, not muh.",
+   "exampleWord": "moon",
+   "confusable": [
+    "n"
+   ]
+  },
+  {
+   "id": "s",
+   "graphemes": [
+    "s"
+   ],
+   "group": 1,
+   "kind": "continuous",
+   "say": "sss",
+   "tip": "A long snake hiss: sss, not suh.",
+   "exampleWord": "sun",
+   "confusable": [
+    "sh"
+   ]
+  },
+  {
+   "id": "ng",
+   "graphemes": [
+    "ng"
+   ],
+   "group": 1,
+   "kind": "continuous",
+   "say": "ng",
+   "tip": "The end of ring, hummed at the back.",
+   "exampleWord": "ring",
+   "confusable": [
+    "n"
+   ]
+  },
+  {
+   "id": "ue",
+   "graphemes": [
+    "oo"
+   ],
+   "group": 1,
+   "kind": "continuous",
+   "say": "ooo",
+   "tip": "Lips round: ooo, as in moon.",
+   "exampleWord": "moon",
+   "confusable": []
+  },
+  {
+   "id": "n",
+   "graphemes": [
+    "n"
+   ],
+   "group": 2,
+   "kind": "continuous",
+   "say": "nnn",
+   "tip": "Hum through your nose with the tongue up: nnn.",
+   "exampleWord": "nut",
+   "confusable": [
+    "m",
+    "ng"
+   ]
+  },
+  {
+   "id": "t",
+   "graphemes": [
+    "t"
+   ],
+   "group": 2,
+   "kind": "stop",
+   "say": "t",
+   "tip": "A tiny tap of the tongue: t, not tuh.",
+   "exampleWord": "tent",
+   "confusable": [
+    "k"
+   ]
+  },
+  {
+   "id": "sh",
+   "graphemes": [
+    "sh"
+   ],
+   "group": 2,
+   "kind": "continuous",
+   "say": "shhh",
+   "tip": "The quiet-please sound: shhh.",
+   "exampleWord": "ship",
+   "confusable": [
+    "s"
+   ]
+  },
+  {
+   "id": "k",
+   "graphemes": [
+    "k",
+    "c"
+   ],
+   "group": 2,
+   "kind": "stop",
+   "say": "k",
+   "tip": "A little click at the back: k, not kuh.",
+   "exampleWord": "king",
+   "confusable": [
+    "t"
+   ]
+  },
+  {
+   "id": "th_unvoiced",
+   "graphemes": [
+    "th"
+   ],
+   "group": 3,
+   "kind": "continuous",
+   "say": "thhh (breathy)",
+   "tip": "Tongue between teeth, blow air, no voice.",
+   "exampleWord": "thumb",
+   "confusable": []
+  },
+  {
+   "id": "i",
+   "graphemes": [
+    "i"
+   ],
+   "group": 3,
+   "kind": "continuous",
+   "say": "i (as in insect)",
+   "tip": "Short, like the middle of ship.",
+   "exampleWord": "ship",
+   "confusable": []
+  },
+  {
+   "id": "r",
+   "graphemes": [
+    "r"
+   ],
+   "group": 3,
+   "kind": "continuous",
+   "say": "rrr",
+   "tip": "A growl: rrr, not ruh.",
+   "exampleWord": "ring",
+   "confusable": []
+  },
+  {
+   "id": "u",
+   "graphemes": [
+    "u"
+   ],
+   "group": 3,
+   "kind": "continuous",
+   "say": "u (as in up)",
+   "tip": "Short, like the middle of sun.",
+   "exampleWord": "sun",
+   "confusable": []
+  },
+  {
+   "id": "p",
+   "graphemes": [
+    "p"
+   ],
+   "group": 3,
+   "kind": "stop",
+   "say": "p",
+   "tip": "A puff of air, no voice: p, not puh.",
+   "exampleWord": "spoon",
+   "confusable": []
+  },
+  {
+   "id": "b",
+   "graphemes": [
+    "b"
+   ],
+   "group": 3,
+   "kind": "stop",
+   "say": "b",
+   "tip": "Lips pop with voice: b, not buh.",
+   "exampleWord": "boot",
+   "confusable": []
+  },
+  {
+   "id": "ow",
+   "graphemes": [
+    "ow"
+   ],
+   "group": 3,
+   "kind": "continuous",
+   "say": "ow",
+   "tip": "As in mouse.",
+   "exampleWord": "mouse",
+   "confusable": []
+  },
+  {
+   "id": "l",
+   "graphemes": [
+    "l"
+   ],
+   "group": 3,
+   "kind": "continuous",
+   "say": "lll",
+   "tip": "Tongue up behind the teeth: lll.",
+   "exampleWord": "milk",
+   "confusable": []
+  },
+  {
+   "id": "o",
+   "graphemes": [
+    "o"
+   ],
+   "group": 3,
+   "kind": "continuous",
+   "say": "o (as in sock)",
+   "tip": "Short and round.",
+   "exampleWord": "sock",
+   "confusable": []
+  },
+  {
+   "id": "ai",
+   "graphemes": [
+    "ai"
+   ],
+   "group": 3,
+   "kind": "continuous",
+   "say": "ay",
+   "tip": "As in snake.",
+   "exampleWord": "snake",
+   "confusable": []
+  },
+  {
+   "id": "ee",
+   "graphemes": [
+    "ee"
+   ],
+   "group": 3,
+   "kind": "continuous",
+   "say": "eee",
+   "tip": "A big smile: eee.",
+   "exampleWord": "sheep",
+   "confusable": []
+  },
+  {
+   "id": "e",
+   "graphemes": [
+    "e"
+   ],
+   "group": 3,
+   "kind": "continuous",
+   "say": "e (as in tent)",
+   "tip": "Short, like the middle of tent.",
+   "exampleWord": "tent",
+   "confusable": []
+  },
+  {
+   "id": "oa",
+   "graphemes": [
+    "oa"
+   ],
+   "group": 3,
+   "kind": "continuous",
+   "say": "oh",
+   "tip": "As in nose.",
+   "exampleWord": "nose",
+   "confusable": []
+  },
+  {
+   "id": "z",
+   "graphemes": [
+    "z"
+   ],
+   "group": 3,
+   "kind": "continuous",
+   "say": "zzz",
+   "tip": "A buzzing bee: zzz.",
+   "exampleWord": "nose",
+   "confusable": [
+    "s"
+   ]
+  },
+  {
+   "id": "igh",
+   "graphemes": [
+    "igh"
+   ],
+   "group": 3,
+   "kind": "continuous",
+   "say": "eye",
+   "tip": "As in kite.",
+   "exampleWord": "kite",
+   "confusable": []
+  }
+ ],
+ "words": [
+  {
+   "word": "moon",
+   "emoji": "🌙",
+   "phonemes": [
+    "m",
+    "ue",
+    "n"
+   ]
+  },
+  {
+   "word": "mouse",
+   "emoji": "🐭",
+   "phonemes": [
+    "m",
+    "ow",
+    "s"
+   ]
+  },
+  {
+   "word": "milk",
+   "emoji": "🥛",
+   "phonemes": [
+    "m",
+    "i",
+    "l",
+    "k"
+   ]
+  },
+  {
+   "word": "monkey",
+   "emoji": "🐒",
+   "phonemes": [
+    "m",
+    "u",
+    "ng",
+    "k",
+    "ee"
+   ]
+  },
+  {
+   "word": "sun",
+   "emoji": "☀️",
+   "phonemes": [
+    "s",
+    "u",
+    "n"
+   ]
+  },
+  {
+   "word": "sock",
+   "emoji": "🧦",
+   "phonemes": [
+    "s",
+    "o",
+    "k"
+   ]
+  },
+  {
+   "word": "snake",
+   "emoji": "🐍",
+   "phonemes": [
+    "s",
+    "n",
+    "ai",
+    "k"
+   ]
+  },
+  {
+   "word": "spoon",
+   "emoji": "🥄",
+   "phonemes": [
+    "s",
+    "p",
+    "ue",
+    "n"
+   ]
+  },
+  {
+   "word": "sing",
+   "emoji": "🎤",
+   "phonemes": [
+    "s",
+    "i",
+    "ng"
+   ]
+  },
+  {
+   "word": "ring",
+   "emoji": "💍",
+   "phonemes": [
+    "r",
+    "i",
+    "ng"
+   ]
+  },
+  {
+   "word": "king",
+   "emoji": "👑",
+   "phonemes": [
+    "k",
+    "i",
+    "ng"
+   ]
+  },
+  {
+   "word": "tongue",
+   "emoji": "👅",
+   "phonemes": [
+    "t",
+    "u",
+    "ng"
+   ]
+  },
+  {
+   "word": "boot",
+   "emoji": "👢",
+   "phonemes": [
+    "b",
+    "ue",
+    "t"
+   ]
+  },
+  {
+   "word": "shoe",
+   "emoji": "👟",
+   "phonemes": [
+    "sh",
+    "ue"
+   ]
+  },
+  {
+   "word": "nut",
+   "emoji": "🥜",
+   "phonemes": [
+    "n",
+    "u",
+    "t"
+   ]
+  },
+  {
+   "word": "net",
+   "emoji": "🥅",
+   "phonemes": [
+    "n",
+    "e",
+    "t"
+   ]
+  },
+  {
+   "word": "nose",
+   "emoji": "👃",
+   "phonemes": [
+    "n",
+    "oa",
+    "z"
+   ]
+  },
+  {
+   "word": "nail",
+   "emoji": "💅",
+   "phonemes": [
+    "n",
+    "ai",
+    "l"
+   ]
+  },
+  {
+   "word": "tent",
+   "emoji": "⛺",
+   "phonemes": [
+    "t",
+    "e",
+    "n",
+    "t"
+   ]
+  },
+  {
+   "word": "tooth",
+   "emoji": "🦷",
+   "phonemes": [
+    "t",
+    "ue",
+    "th_unvoiced"
+   ]
+  },
+  {
+   "word": "tie",
+   "emoji": "👔",
+   "phonemes": [
+    "t",
+    "igh"
+   ]
+  },
+  {
+   "word": "ship",
+   "emoji": "🚢",
+   "phonemes": [
+    "sh",
+    "i",
+    "p"
+   ]
+  },
+  {
+   "word": "shell",
+   "emoji": "🐚",
+   "phonemes": [
+    "sh",
+    "e",
+    "l"
+   ]
+  },
+  {
+   "word": "sheep",
+   "emoji": "🐑",
+   "phonemes": [
+    "sh",
+    "ee",
+    "p"
+   ]
+  },
+  {
+   "word": "kite",
+   "emoji": "🪁",
+   "phonemes": [
+    "k",
+    "igh",
+    "t"
+   ]
+  },
+  {
+   "word": "cake",
+   "emoji": "🎂",
+   "phonemes": [
+    "k",
+    "ai",
+    "k"
+   ]
+  },
+  {
+   "word": "cup",
+   "emoji": "☕",
+   "phonemes": [
+    "k",
+    "u",
+    "p"
+   ]
+  },
+  {
+   "word": "thumb",
+   "emoji": "👍",
+   "phonemes": [
+    "th_unvoiced",
+    "u",
+    "m"
+   ]
+  },
+  {
+   "word": "three",
+   "emoji": "3️⃣",
+   "phonemes": [
+    "th_unvoiced",
+    "r",
+    "ee"
+   ]
+  },
+  {
+   "word": "bell",
+   "emoji": "🔔",
+   "phonemes": [
+    "b",
+    "e",
+    "l"
+   ]
+  },
+  {
+   "word": "lip",
+   "emoji": "👄",
+   "phonemes": [
+    "l",
+    "i",
+    "p"
+   ]
+  }
+ ],
+ "readinessPairs": [
+  {
+   "a": {
+    "name": "cup",
+    "emoji": "☕"
+   },
+   "b": {
+    "name": "cake",
+    "emoji": "🎂"
+   }
+  }
+ ]
+}
