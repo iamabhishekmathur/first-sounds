@@ -1,0 +1,2584 @@
+{
+ "version": 1,
+ "sounds": [
+  {
+   "id": "m",
+   "graphemes": [
+    "m"
+   ],
+   "group": 1,
+   "kind": "continuous",
+   "say": "mmm",
+   "tip": "Hum it with lips closed: mmm, not muh.",
+   "exampleWord": "moon",
+   "confusable": [
+    "n"
+   ]
+  },
+  {
+   "id": "s",
+   "graphemes": [
+    "s"
+   ],
+   "group": 1,
+   "kind": "continuous",
+   "say": "sss",
+   "tip": "Hiss like a snake: sss, with no vowel after it.",
+   "exampleWord": "sun",
+   "confusable": [
+    "sh",
+    "th_unvoiced",
+    "z"
+   ]
+  },
+  {
+   "id": "a",
+   "graphemes": [
+    "a"
+   ],
+   "group": 1,
+   "kind": "continuous",
+   "say": "aaa",
+   "tip": "Open wide, short and flat: the a in apple.",
+   "exampleWord": "apple",
+   "confusable": [
+    "e",
+    "o"
+   ]
+  },
+  {
+   "id": "f",
+   "graphemes": [
+    "f"
+   ],
+   "group": 1,
+   "kind": "continuous",
+   "say": "fff",
+   "tip": "Top teeth on lower lip and blow: fff, not fuh.",
+   "exampleWord": "fish",
+   "confusable": [
+    "th_unvoiced"
+   ]
+  },
+  {
+   "id": "n",
+   "graphemes": [
+    "n"
+   ],
+   "group": 1,
+   "kind": "continuous",
+   "say": "nnn",
+   "tip": "Tongue tip behind top teeth, hum: nnn, not nuh.",
+   "exampleWord": "nose",
+   "confusable": [
+    "m",
+    "ng"
+   ]
+  },
+  {
+   "id": "t",
+   "graphemes": [
+    "t"
+   ],
+   "group": 2,
+   "kind": "stop",
+   "say": "t-",
+   "tip": "A tiny puff of air: t-, with no uh after it.",
+   "exampleWord": "tiger",
+   "confusable": [
+    "d"
+   ]
+  },
+  {
+   "id": "p",
+   "graphemes": [
+    "p"
+   ],
+   "group": 2,
+   "kind": "stop",
+   "say": "p-",
+   "tip": "Pop your lips with a puff of air: p-, not puh.",
+   "exampleWord": "pig",
+   "confusable": [
+    "b"
+   ]
+  },
+  {
+   "id": "i",
+   "graphemes": [
+    "i"
+   ],
+   "group": 2,
+   "kind": "continuous",
+   "say": "ih",
+   "tip": "Short and relaxed, as in insect: ih, not eye.",
+   "exampleWord": "insect",
+   "confusable": [
+    "e",
+    "ee"
+   ]
+  },
+  {
+   "id": "r",
+   "graphemes": [
+    "r"
+   ],
+   "group": 2,
+   "kind": "continuous",
+   "say": "rrr",
+   "tip": "Round lips, tongue curled back, growl: rrr, not wuh.",
+   "exampleWord": "rabbit",
+   "confusable": [
+    "w"
+   ]
+  },
+  {
+   "id": "l",
+   "graphemes": [
+    "l"
+   ],
+   "group": 2,
+   "kind": "continuous",
+   "say": "lll",
+   "tip": "Tongue tip up behind top teeth, voice on: lll, not luh.",
+   "exampleWord": "lion",
+   "confusable": [
+    "w"
+   ]
+  },
+  {
+   "id": "o",
+   "graphemes": [
+    "o"
+   ],
+   "group": 3,
+   "kind": "continuous",
+   "say": "ahh",
+   "tip": "Mouth open and round, short: the o in octopus, not oh.",
+   "exampleWord": "octopus",
+   "confusable": [
+    "u",
+    "oe",
+    "a",
+    "ar"
+   ]
+  },
+  {
+   "id": "d",
+   "graphemes": [
+    "d"
+   ],
+   "group": 3,
+   "kind": "stop",
+   "say": "d-",
+   "tip": "A quick tap with your voice on: d-, not duh.",
+   "exampleWord": "dog",
+   "confusable": [
+    "t"
+   ]
+  },
+  {
+   "id": "h",
+   "graphemes": [
+    "h"
+   ],
+   "group": 3,
+   "kind": "continuous",
+   "say": "h-",
+   "tip": "Just a breath out, no voice: h-, not huh.",
+   "exampleWord": "hat",
+   "confusable": []
+  },
+  {
+   "id": "k",
+   "graphemes": [
+    "c",
+    "k"
+   ],
+   "group": 3,
+   "kind": "stop",
+   "say": "k-",
+   "tip": "A quick click at the back of the throat: k-, not kuh.",
+   "exampleWord": "cat",
+   "confusable": [
+    "g"
+   ]
+  },
+  {
+   "id": "g",
+   "graphemes": [
+    "g"
+   ],
+   "group": 3,
+   "kind": "stop",
+   "say": "g-",
+   "tip": "Voiced pop at the back of the throat: g-, not guh.",
+   "exampleWord": "goat",
+   "confusable": [
+    "k"
+   ]
+  },
+  {
+   "id": "e",
+   "graphemes": [
+    "e"
+   ],
+   "group": 4,
+   "kind": "continuous",
+   "say": "eh",
+   "tip": "Mouth half open: short eh as in egg, not ee or ay.",
+   "exampleWord": "egg",
+   "confusable": [
+    "i",
+    "a",
+    "ae"
+   ]
+  },
+  {
+   "id": "b",
+   "graphemes": [
+    "b"
+   ],
+   "group": 4,
+   "kind": "stop",
+   "say": "b-",
+   "tip": "Pop your lips with voice on, short and clipped: b-, not buh.",
+   "exampleWord": "ball",
+   "confusable": [
+    "p"
+   ]
+  },
+  {
+   "id": "u",
+   "graphemes": [
+    "u"
+   ],
+   "group": 4,
+   "kind": "continuous",
+   "say": "uh",
+   "tip": "Short and lazy: the u in up, with lips relaxed.",
+   "exampleWord": "umbrella",
+   "confusable": [
+    "o"
+   ]
+  },
+  {
+   "id": "w",
+   "graphemes": [
+    "w"
+   ],
+   "group": 4,
+   "kind": "continuous",
+   "say": "www",
+   "tip": "Round your lips and glide: www, not wuh or double-u.",
+   "exampleWord": "water",
+   "confusable": [
+    "v",
+    "r",
+    "l"
+   ]
+  },
+  {
+   "id": "j",
+   "graphemes": [
+    "j"
+   ],
+   "group": 4,
+   "kind": "stop",
+   "say": "j-",
+   "tip": "A voiced jumpy sound: j-, quick, not juh.",
+   "exampleWord": "juice",
+   "confusable": [
+    "ch",
+    "zh"
+   ]
+  },
+  {
+   "id": "v",
+   "graphemes": [
+    "v"
+   ],
+   "group": 5,
+   "kind": "continuous",
+   "say": "vvv",
+   "tip": "Top teeth on lower lip with voice on: vvv, not vuh.",
+   "exampleWord": "van",
+   "confusable": [
+    "w",
+    "th_voiced"
+   ]
+  },
+  {
+   "id": "y",
+   "graphemes": [
+    "y"
+   ],
+   "group": 5,
+   "kind": "continuous",
+   "say": "y-",
+   "tip": "Glide up from a smile: y-, not yuh.",
+   "exampleWord": "yarn",
+   "confusable": []
+  },
+  {
+   "id": "z",
+   "graphemes": [
+    "z"
+   ],
+   "group": 5,
+   "kind": "continuous",
+   "say": "zzz",
+   "tip": "Buzz like a bee: zzz, not zuh or zed.",
+   "exampleWord": "zebra",
+   "confusable": [
+    "s",
+    "th_voiced"
+   ]
+  },
+  {
+   "id": "x",
+   "graphemes": [
+    "x"
+   ],
+   "group": 5,
+   "kind": "stop",
+   "say": "ks",
+   "tip": "Say k and s together, quick: ks, as at the end of fox.",
+   "exampleWord": "fox",
+   "confusable": []
+  },
+  {
+   "id": "qu",
+   "graphemes": [
+    "qu"
+   ],
+   "group": 5,
+   "kind": "stop",
+   "say": "kw",
+   "tip": "Say k and w together, quick: kw, as in queen.",
+   "exampleWord": "queen",
+   "confusable": []
+  },
+  {
+   "id": "sh",
+   "graphemes": [
+    "sh"
+   ],
+   "group": 6,
+   "kind": "continuous",
+   "say": "shhh",
+   "tip": "Finger to lips: a long, quiet shhh.",
+   "exampleWord": "sheep",
+   "confusable": [
+    "s",
+    "ch",
+    "zh"
+   ]
+  },
+  {
+   "id": "ch",
+   "graphemes": [
+    "ch"
+   ],
+   "group": 6,
+   "kind": "stop",
+   "say": "ch-",
+   "tip": "A quick sneezy puff: ch-, not chuh.",
+   "exampleWord": "cheese",
+   "confusable": [
+    "sh",
+    "j"
+   ]
+  },
+  {
+   "id": "th_unvoiced",
+   "graphemes": [
+    "th"
+   ],
+   "group": 6,
+   "kind": "continuous",
+   "say": "thhh",
+   "tip": "Tongue tip between teeth, blow softly: no voice.",
+   "exampleWord": "thumb",
+   "confusable": [
+    "f",
+    "s"
+   ]
+  },
+  {
+   "id": "th_voiced",
+   "graphemes": [
+    "th"
+   ],
+   "group": 6,
+   "kind": "continuous",
+   "say": "thh (voiced)",
+   "tip": "Tongue tip between teeth and hum: th as in this, not d.",
+   "exampleWord": "feather",
+   "confusable": [
+    "v",
+    "z"
+   ]
+  },
+  {
+   "id": "ng",
+   "graphemes": [
+    "ng"
+   ],
+   "group": 6,
+   "kind": "continuous",
+   "say": "ng",
+   "tip": "Back of tongue up, hum through the nose: ng, as in ring.",
+   "exampleWord": "ring",
+   "confusable": [
+    "n"
+   ]
+  },
+  {
+   "id": "ae",
+   "graphemes": [
+    "ai",
+    "a",
+    "ay"
+   ],
+   "group": 7,
+   "kind": "continuous",
+   "say": "ay",
+   "tip": "Say the letter name A and hold it: ay, as in cake.",
+   "exampleWord": "angel",
+   "confusable": [
+    "e",
+    "ie"
+   ]
+  },
+  {
+   "id": "ee",
+   "graphemes": [
+    "ee",
+    "ea"
+   ],
+   "group": 7,
+   "kind": "continuous",
+   "say": "eee",
+   "tip": "Smile wide and hold: eee, as in bee.",
+   "exampleWord": "eagle",
+   "confusable": [
+    "i"
+   ]
+  },
+  {
+   "id": "ie",
+   "graphemes": [
+    "ie",
+    "i",
+    "igh"
+   ],
+   "group": 7,
+   "kind": "continuous",
+   "say": "eye",
+   "tip": "Slide from ah to ee: the long i in pie.",
+   "exampleWord": "ice",
+   "confusable": [
+    "ae"
+   ]
+  },
+  {
+   "id": "oe",
+   "graphemes": [
+    "oa",
+    "o"
+   ],
+   "group": 7,
+   "kind": "continuous",
+   "say": "oh",
+   "tip": "Round your lips and glide: oh, as in go.",
+   "exampleWord": "okay",
+   "confusable": [
+    "o",
+    "ow",
+    "oi"
+   ]
+  },
+  {
+   "id": "ue",
+   "graphemes": [
+    "oo"
+   ],
+   "group": 7,
+   "kind": "continuous",
+   "say": "ooo",
+   "tip": "Lips in a tight circle, hold it: ooo, as in moon.",
+   "exampleWord": "moon",
+   "confusable": [
+    "oo_short",
+    "yoo"
+   ]
+  },
+  {
+   "id": "oo_short",
+   "graphemes": [
+    "oo"
+   ],
+   "group": 7,
+   "kind": "continuous",
+   "say": "oo (short)",
+   "tip": "Short and relaxed lips: the oo in book, not moon.",
+   "exampleWord": "book",
+   "confusable": [
+    "ue"
+   ]
+  },
+  {
+   "id": "yoo",
+   "graphemes": [
+    "ue",
+    "u",
+    "ew"
+   ],
+   "group": 7,
+   "kind": "continuous",
+   "say": "yoo",
+   "tip": "Start with y then glide to ooo: yoo, as in unicorn.",
+   "exampleWord": "unicorn",
+   "confusable": [
+    "ue"
+   ]
+  },
+  {
+   "id": "ow",
+   "graphemes": [
+    "ow",
+    "ou"
+   ],
+   "group": 8,
+   "kind": "continuous",
+   "say": "ow",
+   "tip": "Open wide then round your lips: ow, like saying ouch.",
+   "exampleWord": "owl",
+   "confusable": [
+    "oe"
+   ]
+  },
+  {
+   "id": "oi",
+   "graphemes": [
+    "oi",
+    "oy"
+   ],
+   "group": 8,
+   "kind": "continuous",
+   "say": "oy",
+   "tip": "Start with oh and glide to ee: oy, as in boy.",
+   "exampleWord": "oil",
+   "confusable": [
+    "oe"
+   ]
+  },
+  {
+   "id": "ar",
+   "graphemes": [
+    "ar"
+   ],
+   "group": 8,
+   "kind": "continuous",
+   "say": "ar",
+   "tip": "Mouth wide, tongue pulled back: ar, as in car.",
+   "exampleWord": "arm",
+   "confusable": [
+    "or",
+    "o"
+   ]
+  },
+  {
+   "id": "or",
+   "graphemes": [
+    "or"
+   ],
+   "group": 8,
+   "kind": "continuous",
+   "say": "or",
+   "tip": "Round your lips, tongue back: or, as in fork.",
+   "exampleWord": "horse",
+   "confusable": [
+    "ar",
+    "er"
+   ]
+  },
+  {
+   "id": "er",
+   "graphemes": [
+    "er",
+    "ir",
+    "ur"
+   ],
+   "group": 8,
+   "kind": "continuous",
+   "say": "er",
+   "tip": "Lips relaxed, tongue curled back: er, as in bird.",
+   "exampleWord": "earth",
+   "confusable": [
+    "or"
+   ]
+  },
+  {
+   "id": "zh",
+   "graphemes": [
+    "s"
+   ],
+   "group": 8,
+   "kind": "continuous",
+   "say": "zhh",
+   "tip": "Like shhh but with voice on: zhh, the middle of treasure.",
+   "exampleWord": "television",
+   "confusable": [
+    "sh",
+    "j"
+   ]
+  }
+ ],
+ "words": [
+  {
+   "word": "moon",
+   "emoji": "🌙",
+   "phonemes": [
+    "m",
+    "ue",
+    "n"
+   ]
+  },
+  {
+   "word": "mouse",
+   "emoji": "🐭",
+   "phonemes": [
+    "m",
+    "ow",
+    "s"
+   ]
+  },
+  {
+   "word": "milk",
+   "emoji": "🥛",
+   "phonemes": [
+    "m",
+    "i",
+    "l",
+    "k"
+   ]
+  },
+  {
+   "word": "monkey",
+   "emoji": "🐒",
+   "phonemes": [
+    "m",
+    "u",
+    "ng",
+    "k",
+    "ee"
+   ]
+  },
+  {
+   "word": "mango",
+   "emoji": "🥭",
+   "phonemes": [
+    "m",
+    "a",
+    "ng",
+    "g",
+    "oe"
+   ]
+  },
+  {
+   "word": "mouth",
+   "emoji": "👄",
+   "phonemes": [
+    "m",
+    "ow",
+    "th_unvoiced"
+   ]
+  },
+  {
+   "word": "sun",
+   "emoji": "🌞",
+   "phonemes": [
+    "s",
+    "u",
+    "n"
+   ]
+  },
+  {
+   "word": "sock",
+   "emoji": "🧦",
+   "phonemes": [
+    "s",
+    "o",
+    "k"
+   ]
+  },
+  {
+   "word": "star",
+   "emoji": "⭐",
+   "phonemes": [
+    "s",
+    "t",
+    "ar"
+   ]
+  },
+  {
+   "word": "snake",
+   "emoji": "🐍",
+   "phonemes": [
+    "s",
+    "n",
+    "ae",
+    "k"
+   ]
+  },
+  {
+   "word": "spoon",
+   "emoji": "🥄",
+   "phonemes": [
+    "s",
+    "p",
+    "ue",
+    "n"
+   ]
+  },
+  {
+   "word": "snail",
+   "emoji": "🐌",
+   "phonemes": [
+    "s",
+    "n",
+    "ae",
+    "l"
+   ]
+  },
+  {
+   "word": "soap",
+   "emoji": "🧼",
+   "phonemes": [
+    "s",
+    "oe",
+    "p"
+   ]
+  },
+  {
+   "word": "seal",
+   "emoji": "🦭",
+   "phonemes": [
+    "s",
+    "ee",
+    "l"
+   ]
+  },
+  {
+   "word": "apple",
+   "emoji": "🍎",
+   "phonemes": [
+    "a",
+    "p",
+    "u",
+    "l"
+   ]
+  },
+  {
+   "word": "ant",
+   "emoji": "🐜",
+   "phonemes": [
+    "a",
+    "n",
+    "t"
+   ]
+  },
+  {
+   "word": "anchor",
+   "emoji": "⚓",
+   "phonemes": [
+    "a",
+    "ng",
+    "k",
+    "er"
+   ]
+  },
+  {
+   "word": "arm",
+   "emoji": "💪",
+   "phonemes": [
+    "ar",
+    "m"
+   ]
+  },
+  {
+   "word": "fish",
+   "emoji": "🐟",
+   "phonemes": [
+    "f",
+    "i",
+    "sh"
+   ]
+  },
+  {
+   "word": "frog",
+   "emoji": "🐸",
+   "phonemes": [
+    "f",
+    "r",
+    "o",
+    "g"
+   ]
+  },
+  {
+   "word": "fox",
+   "emoji": "🦊",
+   "phonemes": [
+    "f",
+    "o",
+    "x"
+   ]
+  },
+  {
+   "word": "fork",
+   "emoji": "🍴",
+   "phonemes": [
+    "f",
+    "or",
+    "k"
+   ]
+  },
+  {
+   "word": "foot",
+   "emoji": "🦶",
+   "phonemes": [
+    "f",
+    "oo_short",
+    "t"
+   ]
+  },
+  {
+   "word": "flower",
+   "emoji": "🌼",
+   "phonemes": [
+    "f",
+    "l",
+    "ow",
+    "er"
+   ]
+  },
+  {
+   "word": "feather",
+   "emoji": "🪶",
+   "phonemes": [
+    "f",
+    "e",
+    "th_voiced",
+    "er"
+   ]
+  },
+  {
+   "word": "fire",
+   "emoji": "🔥",
+   "phonemes": [
+    "f",
+    "ie",
+    "er"
+   ]
+  },
+  {
+   "word": "football",
+   "emoji": "🏈",
+   "phonemes": [
+    "f",
+    "oo_short",
+    "t",
+    "b",
+    "o",
+    "l"
+   ]
+  },
+  {
+   "word": "nose",
+   "emoji": "👃",
+   "phonemes": [
+    "n",
+    "oe",
+    "z"
+   ]
+  },
+  {
+   "word": "noodles",
+   "emoji": "🍜",
+   "phonemes": [
+    "n",
+    "ue",
+    "d",
+    "u",
+    "l",
+    "z"
+   ]
+  },
+  {
+   "word": "needle",
+   "emoji": "🪡",
+   "phonemes": [
+    "n",
+    "ee",
+    "d",
+    "u",
+    "l"
+   ]
+  },
+  {
+   "word": "tiger",
+   "emoji": "🐯",
+   "phonemes": [
+    "t",
+    "ie",
+    "g",
+    "er"
+   ]
+  },
+  {
+   "word": "turtle",
+   "emoji": "🐢",
+   "phonemes": [
+    "t",
+    "er",
+    "t",
+    "u",
+    "l"
+   ]
+  },
+  {
+   "word": "tree",
+   "emoji": "🌳",
+   "phonemes": [
+    "t",
+    "r",
+    "ee"
+   ]
+  },
+  {
+   "word": "train",
+   "emoji": "🚂",
+   "phonemes": [
+    "t",
+    "r",
+    "ae",
+    "n"
+   ]
+  },
+  {
+   "word": "truck",
+   "emoji": "🚚",
+   "phonemes": [
+    "t",
+    "r",
+    "u",
+    "k"
+   ]
+  },
+  {
+   "word": "tent",
+   "emoji": "⛺",
+   "phonemes": [
+    "t",
+    "e",
+    "n",
+    "t"
+   ]
+  },
+  {
+   "word": "tooth",
+   "emoji": "🦷",
+   "phonemes": [
+    "t",
+    "ue",
+    "th_unvoiced"
+   ]
+  },
+  {
+   "word": "teddy",
+   "emoji": "🧸",
+   "phonemes": [
+    "t",
+    "e",
+    "d",
+    "ee"
+   ]
+  },
+  {
+   "word": "tomato",
+   "emoji": "🍅",
+   "phonemes": [
+    "t",
+    "u",
+    "m",
+    "ae",
+    "t",
+    "oe"
+   ]
+  },
+  {
+   "word": "trumpet",
+   "emoji": "🎺",
+   "phonemes": [
+    "t",
+    "r",
+    "u",
+    "m",
+    "p",
+    "i",
+    "t"
+   ]
+  },
+  {
+   "word": "tongue",
+   "emoji": "👅",
+   "phonemes": [
+    "t",
+    "u",
+    "ng"
+   ]
+  },
+  {
+   "word": "thumb",
+   "emoji": "👍",
+   "phonemes": [
+    "th_unvoiced",
+    "u",
+    "m"
+   ]
+  },
+  {
+   "word": "thermometer",
+   "emoji": "🌡️",
+   "phonemes": [
+    "th_unvoiced",
+    "er",
+    "m",
+    "o",
+    "m",
+    "u",
+    "t",
+    "er"
+   ]
+  },
+  {
+   "word": "pig",
+   "emoji": "🐷",
+   "phonemes": [
+    "p",
+    "i",
+    "g"
+   ]
+  },
+  {
+   "word": "pizza",
+   "emoji": "🍕",
+   "phonemes": [
+    "p",
+    "ee",
+    "t",
+    "s",
+    "u"
+   ]
+  },
+  {
+   "word": "panda",
+   "emoji": "🐼",
+   "phonemes": [
+    "p",
+    "a",
+    "n",
+    "d",
+    "u"
+   ]
+  },
+  {
+   "word": "penguin",
+   "emoji": "🐧",
+   "phonemes": [
+    "p",
+    "e",
+    "ng",
+    "g",
+    "w",
+    "i",
+    "n"
+   ]
+  },
+  {
+   "word": "peach",
+   "emoji": "🍑",
+   "phonemes": [
+    "p",
+    "ee",
+    "ch"
+   ]
+  },
+  {
+   "word": "pie",
+   "emoji": "🥧",
+   "phonemes": [
+    "p",
+    "ie"
+   ]
+  },
+  {
+   "word": "popcorn",
+   "emoji": "🍿",
+   "phonemes": [
+    "p",
+    "o",
+    "p",
+    "k",
+    "or",
+    "n"
+   ]
+  },
+  {
+   "word": "piano",
+   "emoji": "🎹",
+   "phonemes": [
+    "p",
+    "ee",
+    "a",
+    "n",
+    "oe"
+   ]
+  },
+  {
+   "word": "potato",
+   "emoji": "🥔",
+   "phonemes": [
+    "p",
+    "u",
+    "t",
+    "ae",
+    "t",
+    "oe"
+   ]
+  },
+  {
+   "word": "iguana",
+   "emoji": "🦎",
+   "phonemes": [
+    "i",
+    "g",
+    "w",
+    "o",
+    "n",
+    "u"
+   ]
+  },
+  {
+   "word": "insect",
+   "emoji": "🐛",
+   "phonemes": [
+    "i",
+    "n",
+    "s",
+    "e",
+    "k",
+    "t"
+   ]
+  },
+  {
+   "word": "ill",
+   "emoji": "🤒",
+   "phonemes": [
+    "i",
+    "l"
+   ]
+  },
+  {
+   "word": "rabbit",
+   "emoji": "🐰",
+   "phonemes": [
+    "r",
+    "a",
+    "b",
+    "i",
+    "t"
+   ]
+  },
+  {
+   "word": "rainbow",
+   "emoji": "🌈",
+   "phonemes": [
+    "r",
+    "ae",
+    "n",
+    "b",
+    "oe"
+   ]
+  },
+  {
+   "word": "robot",
+   "emoji": "🤖",
+   "phonemes": [
+    "r",
+    "oe",
+    "b",
+    "o",
+    "t"
+   ]
+  },
+  {
+   "word": "ring",
+   "emoji": "💍",
+   "phonemes": [
+    "r",
+    "i",
+    "ng"
+   ]
+  },
+  {
+   "word": "rocket",
+   "emoji": "🚀",
+   "phonemes": [
+    "r",
+    "o",
+    "k",
+    "i",
+    "t"
+   ]
+  },
+  {
+   "word": "rose",
+   "emoji": "🌹",
+   "phonemes": [
+    "r",
+    "oe",
+    "z"
+   ]
+  },
+  {
+   "word": "rice",
+   "emoji": "🍚",
+   "phonemes": [
+    "r",
+    "ie",
+    "s"
+   ]
+  },
+  {
+   "word": "radio",
+   "emoji": "📻",
+   "phonemes": [
+    "r",
+    "ae",
+    "d",
+    "ee",
+    "oe"
+   ]
+  },
+  {
+   "word": "lion",
+   "emoji": "🦁",
+   "phonemes": [
+    "l",
+    "ie",
+    "u",
+    "n"
+   ]
+  },
+  {
+   "word": "leaf",
+   "emoji": "🍃",
+   "phonemes": [
+    "l",
+    "ee",
+    "f"
+   ]
+  },
+  {
+   "word": "lemon",
+   "emoji": "🍋",
+   "phonemes": [
+    "l",
+    "e",
+    "m",
+    "u",
+    "n"
+   ]
+  },
+  {
+   "word": "ladybug",
+   "emoji": "🐞",
+   "phonemes": [
+    "l",
+    "ae",
+    "d",
+    "ee",
+    "b",
+    "u",
+    "g"
+   ]
+  },
+  {
+   "word": "leg",
+   "emoji": "🦵",
+   "phonemes": [
+    "l",
+    "e",
+    "g"
+   ]
+  },
+  {
+   "word": "lock",
+   "emoji": "🔒",
+   "phonemes": [
+    "l",
+    "o",
+    "k"
+   ]
+  },
+  {
+   "word": "octopus",
+   "emoji": "🐙",
+   "phonemes": [
+    "o",
+    "k",
+    "t",
+    "u",
+    "p",
+    "u",
+    "s"
+   ]
+  },
+  {
+   "word": "otter",
+   "emoji": "🦦",
+   "phonemes": [
+    "o",
+    "t",
+    "er"
+   ]
+  },
+  {
+   "word": "ox",
+   "emoji": "🐂",
+   "phonemes": [
+    "o",
+    "x"
+   ]
+  },
+  {
+   "word": "dog",
+   "emoji": "🐶",
+   "phonemes": [
+    "d",
+    "o",
+    "g"
+   ]
+  },
+  {
+   "word": "duck",
+   "emoji": "🦆",
+   "phonemes": [
+    "d",
+    "u",
+    "k"
+   ]
+  },
+  {
+   "word": "door",
+   "emoji": "🚪",
+   "phonemes": [
+    "d",
+    "or"
+   ]
+  },
+  {
+   "word": "dinosaur",
+   "emoji": "🦖",
+   "phonemes": [
+    "d",
+    "ie",
+    "n",
+    "u",
+    "s",
+    "or"
+   ]
+  },
+  {
+   "word": "drum",
+   "emoji": "🥁",
+   "phonemes": [
+    "d",
+    "r",
+    "u",
+    "m"
+   ]
+  },
+  {
+   "word": "donut",
+   "emoji": "🍩",
+   "phonemes": [
+    "d",
+    "oe",
+    "n",
+    "u",
+    "t"
+   ]
+  },
+  {
+   "word": "dragon",
+   "emoji": "🐉",
+   "phonemes": [
+    "d",
+    "r",
+    "a",
+    "g",
+    "u",
+    "n"
+   ]
+  },
+  {
+   "word": "dice",
+   "emoji": "🎲",
+   "phonemes": [
+    "d",
+    "ie",
+    "s"
+   ]
+  },
+  {
+   "word": "hat",
+   "emoji": "🎩",
+   "phonemes": [
+    "h",
+    "a",
+    "t"
+   ]
+  },
+  {
+   "word": "house",
+   "emoji": "🏠",
+   "phonemes": [
+    "h",
+    "ow",
+    "s"
+   ]
+  },
+  {
+   "word": "horse",
+   "emoji": "🐴",
+   "phonemes": [
+    "h",
+    "or",
+    "s"
+   ]
+  },
+  {
+   "word": "hand",
+   "emoji": "✋",
+   "phonemes": [
+    "h",
+    "a",
+    "n",
+    "d"
+   ]
+  },
+  {
+   "word": "heart",
+   "emoji": "💛",
+   "phonemes": [
+    "h",
+    "ar",
+    "t"
+   ]
+  },
+  {
+   "word": "cat",
+   "emoji": "🐱",
+   "phonemes": [
+    "k",
+    "a",
+    "t"
+   ]
+  },
+  {
+   "word": "cow",
+   "emoji": "🐮",
+   "phonemes": [
+    "k",
+    "ow"
+   ]
+  },
+  {
+   "word": "car",
+   "emoji": "🚗",
+   "phonemes": [
+    "k",
+    "ar"
+   ]
+  },
+  {
+   "word": "cake",
+   "emoji": "🎂",
+   "phonemes": [
+    "k",
+    "ae",
+    "k"
+   ]
+  },
+  {
+   "word": "kite",
+   "emoji": "🪁",
+   "phonemes": [
+    "k",
+    "ie",
+    "t"
+   ]
+  },
+  {
+   "word": "key",
+   "emoji": "🔑",
+   "phonemes": [
+    "k",
+    "ee"
+   ]
+  },
+  {
+   "word": "kangaroo",
+   "emoji": "🦘",
+   "phonemes": [
+    "k",
+    "a",
+    "ng",
+    "g",
+    "u",
+    "r",
+    "ue"
+   ]
+  },
+  {
+   "word": "koala",
+   "emoji": "🐨",
+   "phonemes": [
+    "k",
+    "oe",
+    "o",
+    "l",
+    "u"
+   ]
+  },
+  {
+   "word": "camel",
+   "emoji": "🐫",
+   "phonemes": [
+    "k",
+    "a",
+    "m",
+    "u",
+    "l"
+   ]
+  },
+  {
+   "word": "corn",
+   "emoji": "🌽",
+   "phonemes": [
+    "k",
+    "or",
+    "n"
+   ]
+  },
+  {
+   "word": "cookie",
+   "emoji": "🍪",
+   "phonemes": [
+    "k",
+    "oo_short",
+    "k",
+    "ee"
+   ]
+  },
+  {
+   "word": "crab",
+   "emoji": "🦀",
+   "phonemes": [
+    "k",
+    "r",
+    "a",
+    "b"
+   ]
+  },
+  {
+   "word": "crown",
+   "emoji": "👑",
+   "phonemes": [
+    "k",
+    "r",
+    "ow",
+    "n"
+   ]
+  },
+  {
+   "word": "cloud",
+   "emoji": "☁️",
+   "phonemes": [
+    "k",
+    "l",
+    "ow",
+    "d"
+   ]
+  },
+  {
+   "word": "coin",
+   "emoji": "🪙",
+   "phonemes": [
+    "k",
+    "oi",
+    "n"
+   ]
+  },
+  {
+   "word": "computer",
+   "emoji": "💻",
+   "phonemes": [
+    "k",
+    "u",
+    "m",
+    "p",
+    "yoo",
+    "t",
+    "er"
+   ]
+  },
+  {
+   "word": "goat",
+   "emoji": "🐐",
+   "phonemes": [
+    "g",
+    "oe",
+    "t"
+   ]
+  },
+  {
+   "word": "girl",
+   "emoji": "👧",
+   "phonemes": [
+    "g",
+    "er",
+    "l"
+   ]
+  },
+  {
+   "word": "grapes",
+   "emoji": "🍇",
+   "phonemes": [
+    "g",
+    "r",
+    "ae",
+    "p",
+    "s"
+   ]
+  },
+  {
+   "word": "guitar",
+   "emoji": "🎸",
+   "phonemes": [
+    "g",
+    "i",
+    "t",
+    "ar"
+   ]
+  },
+  {
+   "word": "gorilla",
+   "emoji": "🦍",
+   "phonemes": [
+    "g",
+    "u",
+    "r",
+    "i",
+    "l",
+    "u"
+   ]
+  },
+  {
+   "word": "egg",
+   "emoji": "🥚",
+   "phonemes": [
+    "e",
+    "g"
+   ]
+  },
+  {
+   "word": "elephant",
+   "emoji": "🐘",
+   "phonemes": [
+    "e",
+    "l",
+    "u",
+    "f",
+    "u",
+    "n",
+    "t"
+   ]
+  },
+  {
+   "word": "ball",
+   "emoji": "⚽",
+   "phonemes": [
+    "b",
+    "o",
+    "l"
+   ]
+  },
+  {
+   "word": "banana",
+   "emoji": "🍌",
+   "phonemes": [
+    "b",
+    "u",
+    "n",
+    "a",
+    "n",
+    "u"
+   ]
+  },
+  {
+   "word": "bee",
+   "emoji": "🐝",
+   "phonemes": [
+    "b",
+    "ee"
+   ]
+  },
+  {
+   "word": "bus",
+   "emoji": "🚌",
+   "phonemes": [
+    "b",
+    "u",
+    "s"
+   ]
+  },
+  {
+   "word": "boat",
+   "emoji": "⛵",
+   "phonemes": [
+    "b",
+    "oe",
+    "t"
+   ]
+  },
+  {
+   "word": "book",
+   "emoji": "📖",
+   "phonemes": [
+    "b",
+    "oo_short",
+    "k"
+   ]
+  },
+  {
+   "word": "bird",
+   "emoji": "🐦",
+   "phonemes": [
+    "b",
+    "er",
+    "d"
+   ]
+  },
+  {
+   "word": "butterfly",
+   "emoji": "🦋",
+   "phonemes": [
+    "b",
+    "u",
+    "t",
+    "er",
+    "f",
+    "l",
+    "ie"
+   ]
+  },
+  {
+   "word": "balloon",
+   "emoji": "🎈",
+   "phonemes": [
+    "b",
+    "u",
+    "l",
+    "ue",
+    "n"
+   ]
+  },
+  {
+   "word": "bread",
+   "emoji": "🍞",
+   "phonemes": [
+    "b",
+    "r",
+    "e",
+    "d"
+   ]
+  },
+  {
+   "word": "bell",
+   "emoji": "🔔",
+   "phonemes": [
+    "b",
+    "e",
+    "l"
+   ]
+  },
+  {
+   "word": "box",
+   "emoji": "📦",
+   "phonemes": [
+    "b",
+    "o",
+    "x"
+   ]
+  },
+  {
+   "word": "bone",
+   "emoji": "🦴",
+   "phonemes": [
+    "b",
+    "oe",
+    "n"
+   ]
+  },
+  {
+   "word": "baby",
+   "emoji": "👶",
+   "phonemes": [
+    "b",
+    "ae",
+    "b",
+    "ee"
+   ]
+  },
+  {
+   "word": "bike",
+   "emoji": "🚲",
+   "phonemes": [
+    "b",
+    "ie",
+    "k"
+   ]
+  },
+  {
+   "word": "boot",
+   "emoji": "🥾",
+   "phonemes": [
+    "b",
+    "ue",
+    "t"
+   ]
+  },
+  {
+   "word": "bath",
+   "emoji": "🛁",
+   "phonemes": [
+    "b",
+    "a",
+    "th_unvoiced"
+   ]
+  },
+  {
+   "word": "boy",
+   "emoji": "👦",
+   "phonemes": [
+    "b",
+    "oi"
+   ]
+  },
+  {
+   "word": "bed",
+   "emoji": "🛏️",
+   "phonemes": [
+    "b",
+    "e",
+    "d"
+   ]
+  },
+  {
+   "word": "umbrella",
+   "emoji": "☔",
+   "phonemes": [
+    "u",
+    "m",
+    "b",
+    "r",
+    "e",
+    "l",
+    "u"
+   ]
+  },
+  {
+   "word": "up",
+   "emoji": "⬆️",
+   "phonemes": [
+    "u",
+    "p"
+   ]
+  },
+  {
+   "word": "water",
+   "emoji": "💧",
+   "phonemes": [
+    "w",
+    "o",
+    "t",
+    "er"
+   ]
+  },
+  {
+   "word": "watch",
+   "emoji": "⌚",
+   "phonemes": [
+    "w",
+    "o",
+    "ch"
+   ]
+  },
+  {
+   "word": "wolf",
+   "emoji": "🐺",
+   "phonemes": [
+    "w",
+    "oo_short",
+    "l",
+    "f"
+   ]
+  },
+  {
+   "word": "whale",
+   "emoji": "🐳",
+   "phonemes": [
+    "w",
+    "ae",
+    "l"
+   ]
+  },
+  {
+   "word": "watermelon",
+   "emoji": "🍉",
+   "phonemes": [
+    "w",
+    "o",
+    "t",
+    "er",
+    "m",
+    "e",
+    "l",
+    "u",
+    "n"
+   ]
+  },
+  {
+   "word": "window",
+   "emoji": "🪟",
+   "phonemes": [
+    "w",
+    "i",
+    "n",
+    "d",
+    "oe"
+   ]
+  },
+  {
+   "word": "wave",
+   "emoji": "👋",
+   "phonemes": [
+    "w",
+    "ae",
+    "v"
+   ]
+  },
+  {
+   "word": "juice",
+   "emoji": "🧃",
+   "phonemes": [
+    "j",
+    "ue",
+    "s"
+   ]
+  },
+  {
+   "word": "jacket",
+   "emoji": "🧥",
+   "phonemes": [
+    "j",
+    "a",
+    "k",
+    "i",
+    "t"
+   ]
+  },
+  {
+   "word": "van",
+   "emoji": "🚐",
+   "phonemes": [
+    "v",
+    "a",
+    "n"
+   ]
+  },
+  {
+   "word": "violin",
+   "emoji": "🎻",
+   "phonemes": [
+    "v",
+    "ie",
+    "u",
+    "l",
+    "i",
+    "n"
+   ]
+  },
+  {
+   "word": "volcano",
+   "emoji": "🌋",
+   "phonemes": [
+    "v",
+    "o",
+    "l",
+    "k",
+    "ae",
+    "n",
+    "oe"
+   ]
+  },
+  {
+   "word": "yoyo",
+   "emoji": "🪀",
+   "phonemes": [
+    "y",
+    "oe",
+    "y",
+    "oe"
+   ]
+  },
+  {
+   "word": "yarn",
+   "emoji": "🧶",
+   "phonemes": [
+    "y",
+    "ar",
+    "n"
+   ]
+  },
+  {
+   "word": "yellow",
+   "emoji": "🟡",
+   "phonemes": [
+    "y",
+    "e",
+    "l",
+    "oe"
+   ]
+  },
+  {
+   "word": "yawn",
+   "emoji": "🥱",
+   "phonemes": [
+    "y",
+    "o",
+    "n"
+   ]
+  },
+  {
+   "word": "yummy",
+   "emoji": "😋",
+   "phonemes": [
+    "y",
+    "u",
+    "m",
+    "ee"
+   ]
+  },
+  {
+   "word": "zebra",
+   "emoji": "🦓",
+   "phonemes": [
+    "z",
+    "ee",
+    "b",
+    "r",
+    "u"
+   ]
+  },
+  {
+   "word": "zipper",
+   "emoji": "🤐",
+   "phonemes": [
+    "z",
+    "i",
+    "p",
+    "er"
+   ]
+  },
+  {
+   "word": "queen",
+   "emoji": "👸",
+   "phonemes": [
+    "qu",
+    "ee",
+    "n"
+   ]
+  },
+  {
+   "word": "quiet",
+   "emoji": "🤫",
+   "phonemes": [
+    "qu",
+    "ie",
+    "u",
+    "t"
+   ]
+  },
+  {
+   "word": "question",
+   "emoji": "❓",
+   "phonemes": [
+    "qu",
+    "e",
+    "s",
+    "ch",
+    "u",
+    "n"
+   ]
+  },
+  {
+   "word": "sheep",
+   "emoji": "🐑",
+   "phonemes": [
+    "sh",
+    "ee",
+    "p"
+   ]
+  },
+  {
+   "word": "ship",
+   "emoji": "🚢",
+   "phonemes": [
+    "sh",
+    "i",
+    "p"
+   ]
+  },
+  {
+   "word": "shoe",
+   "emoji": "👟",
+   "phonemes": [
+    "sh",
+    "ue"
+   ]
+  },
+  {
+   "word": "shirt",
+   "emoji": "👕",
+   "phonemes": [
+    "sh",
+    "er",
+    "t"
+   ]
+  },
+  {
+   "word": "shell",
+   "emoji": "🐚",
+   "phonemes": [
+    "sh",
+    "e",
+    "l"
+   ]
+  },
+  {
+   "word": "shark",
+   "emoji": "🦈",
+   "phonemes": [
+    "sh",
+    "ar",
+    "k"
+   ]
+  },
+  {
+   "word": "shower",
+   "emoji": "🚿",
+   "phonemes": [
+    "sh",
+    "ow",
+    "er"
+   ]
+  },
+  {
+   "word": "shorts",
+   "emoji": "🩳",
+   "phonemes": [
+    "sh",
+    "or",
+    "t",
+    "s"
+   ]
+  },
+  {
+   "word": "cheese",
+   "emoji": "🧀",
+   "phonemes": [
+    "ch",
+    "ee",
+    "z"
+   ]
+  },
+  {
+   "word": "chicken",
+   "emoji": "🐔",
+   "phonemes": [
+    "ch",
+    "i",
+    "k",
+    "i",
+    "n"
+   ]
+  },
+  {
+   "word": "chick",
+   "emoji": "🐥",
+   "phonemes": [
+    "ch",
+    "i",
+    "k"
+   ]
+  },
+  {
+   "word": "cherry",
+   "emoji": "🍒",
+   "phonemes": [
+    "ch",
+    "e",
+    "r",
+    "ee"
+   ]
+  },
+  {
+   "word": "chocolate",
+   "emoji": "🍫",
+   "phonemes": [
+    "ch",
+    "o",
+    "k",
+    "l",
+    "u",
+    "t"
+   ]
+  },
+  {
+   "word": "church",
+   "emoji": "⛪",
+   "phonemes": [
+    "ch",
+    "er",
+    "ch"
+   ]
+  },
+  {
+   "word": "earth",
+   "emoji": "🌎",
+   "phonemes": [
+    "er",
+    "th_unvoiced"
+   ]
+  },
+  {
+   "word": "angel",
+   "emoji": "👼",
+   "phonemes": [
+    "ae",
+    "n",
+    "j",
+    "u",
+    "l"
+   ]
+  },
+  {
+   "word": "eagle",
+   "emoji": "🦅",
+   "phonemes": [
+    "ee",
+    "g",
+    "u",
+    "l"
+   ]
+  },
+  {
+   "word": "ice",
+   "emoji": "🧊",
+   "phonemes": [
+    "ie",
+    "s"
+   ]
+  },
+  {
+   "word": "eye",
+   "emoji": "👁️",
+   "phonemes": [
+    "ie"
+   ]
+  },
+  {
+   "word": "island",
+   "emoji": "🏝️",
+   "phonemes": [
+    "ie",
+    "l",
+    "u",
+    "n",
+    "d"
+   ]
+  },
+  {
+   "word": "unicorn",
+   "emoji": "🦄",
+   "phonemes": [
+    "yoo",
+    "n",
+    "u",
+    "k",
+    "or",
+    "n"
+   ]
+  },
+  {
+   "word": "owl",
+   "emoji": "🦉",
+   "phonemes": [
+    "ow",
+    "l"
+   ]
+  },
+  {
+   "word": "oil",
+   "emoji": "🛢️",
+   "phonemes": [
+    "oi",
+    "l"
+   ]
+  },
+  {
+   "word": "ambulance",
+   "emoji": "🚑",
+   "phonemes": [
+    "a",
+    "m",
+    "b",
+    "y",
+    "u",
+    "l",
+    "u",
+    "n",
+    "s"
+   ]
+  },
+  {
+   "word": "hippo",
+   "emoji": "🦛",
+   "phonemes": [
+    "h",
+    "i",
+    "p",
+    "oe"
+   ]
+  },
+  {
+   "word": "hammer",
+   "emoji": "🔨",
+   "phonemes": [
+    "h",
+    "a",
+    "m",
+    "er"
+   ]
+  },
+  {
+   "word": "honey",
+   "emoji": "🍯",
+   "phonemes": [
+    "h",
+    "u",
+    "n",
+    "ee"
+   ]
+  },
+  {
+   "word": "nest",
+   "emoji": "🪺",
+   "phonemes": [
+    "n",
+    "e",
+    "s",
+    "t"
+   ]
+  },
+  {
+   "word": "television",
+   "emoji": "📺",
+   "phonemes": [
+    "t",
+    "e",
+    "l",
+    "u",
+    "v",
+    "i",
+    "zh",
+    "u",
+    "n"
+   ]
+  },
+  {
+   "word": "elevator",
+   "emoji": "🛗",
+   "phonemes": [
+    "e",
+    "l",
+    "u",
+    "v",
+    "ae",
+    "t",
+    "er"
+   ]
+  },
+  {
+   "word": "underwear",
+   "emoji": "🩲",
+   "phonemes": [
+    "u",
+    "n",
+    "d",
+    "er",
+    "w",
+    "e",
+    "r"
+   ]
+  },
+  {
+   "word": "jellyfish",
+   "emoji": "🪼",
+   "phonemes": [
+    "j",
+    "e",
+    "l",
+    "ee",
+    "f",
+    "i",
+    "sh"
+   ]
+  },
+  {
+   "word": "jar",
+   "emoji": "🫙",
+   "phonemes": [
+    "j",
+    "ar"
+   ]
+  },
+  {
+   "word": "zero",
+   "emoji": "0️⃣",
+   "phonemes": [
+    "z",
+    "ee",
+    "r",
+    "oe"
+   ]
+  },
+  {
+   "word": "okay",
+   "emoji": "👌",
+   "phonemes": [
+    "oe",
+    "k",
+    "ae"
+   ]
+  }
+ ],
+ "readinessPairs": [
+  {
+   "a": {
+    "name": "dog",
+    "emoji": "🐶"
+   },
+   "b": {
+    "name": "fish",
+    "emoji": "🐟"
+   }
+  },
+  {
+   "a": {
+    "name": "cat",
+    "emoji": "🐱"
+   },
+   "b": {
+    "name": "bus",
+    "emoji": "🚌"
+   }
+  },
+  {
+   "a": {
+    "name": "pig",
+    "emoji": "🐷"
+   },
+   "b": {
+    "name": "boat",
+    "emoji": "⛵"
+   }
+  },
+  {
+   "a": {
+    "name": "cow",
+    "emoji": "🐮"
+   },
+   "b": {
+    "name": "shoe",
+    "emoji": "👟"
+   }
+  },
+  {
+   "a": {
+    "name": "bear",
+    "emoji": "🐻"
+   },
+   "b": {
+    "name": "ball",
+    "emoji": "⚽"
+   }
+  },
+  {
+   "a": {
+    "name": "frog",
+    "emoji": "🐸"
+   },
+   "b": {
+    "name": "hat",
+    "emoji": "🎩"
+   }
+  },
+  {
+   "a": {
+    "name": "sheep",
+    "emoji": "🐑"
+   },
+   "b": {
+    "name": "car",
+    "emoji": "🚗"
+   }
+  },
+  {
+   "a": {
+    "name": "duck",
+    "emoji": "🦆"
+   },
+   "b": {
+    "name": "cake",
+    "emoji": "🎂"
+   }
+  }
+ ]
+}
