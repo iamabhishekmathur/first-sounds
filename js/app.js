@@ -33,6 +33,7 @@ const app = {
   settings: { ...DEFAULT_SETTINGS },
   progress: { s1: {}, s2: {} },
   readiness: [],
+  sessions: [], // play sessions, for the parent's Tracker (see js/syncdoc.js)
   meta: { settingsAt: 0, resetAt: 0 }, // sync timestamps: last settings change, last progress reset
   recordings: new Map(),
   sync: null,
@@ -68,6 +69,8 @@ const app = {
     const ided = withIds({ s1: progress.s1 || {}, s2: progress.s2 || {} }, readiness);
     this.progress = { s1: ided.progress.s1, s2: ided.progress.s2 };
     this.readiness = ided.readiness;
+    const sessions = await safe(() => s.getKV('sessions'), []);
+    this.sessions = Array.isArray(sessions) ? sessions.filter((x) => x && typeof x.id === 'string') : [];
     const ids = new Set(this.data.sounds.map((x) => x.id));
     const recs = await safe(() => s.allRecordings(), []);
     this.recordings = new Map(recs.filter((r) => ids.has(r.id) && r.data).map((r) => [r.id, r]));

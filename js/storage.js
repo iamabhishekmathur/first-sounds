@@ -1,10 +1,11 @@
 // All local state lives in IndexedDB: store "recordings" (one record per sound id, audio bytes +
-// mime) and store "kv" (settings, progress, readiness, meta = sync timestamps, sync = the family
+// mime) and store "kv" (settings, progress, readiness, sessions, meta = sync timestamps, sync = the family
 // code). With a family code the server is the source of truth and this is the local cache (js/sync.js). If IndexedDB is missing or fails to open, an
 // in-memory backend is used so the app still runs (nothing persists; the parent is told).
 
 const DB_VERSION = 1;
-export const KV_KEYS = ['settings', 'progress', 'readiness', 'meta'];
+// "sessions" was added later: older stores and backups simply have none (read as []).
+export const KV_KEYS = ['settings', 'progress', 'readiness', 'sessions', 'meta'];
 const DEVICE_KEYS = ['sync']; // kept on this device: not exported, and kept when a backup is imported
 
 function req2promise(req) {
@@ -109,6 +110,7 @@ function makeStore(b, problem) {
     async resetProgress() {
       await b.put('kv', { s1: {}, s2: {} }, 'progress');
       await b.put('kv', [], 'readiness');
+      await b.put('kv', [], 'sessions');
     },
 
     async exportBackup() {

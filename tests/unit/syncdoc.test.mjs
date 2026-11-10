@@ -38,12 +38,13 @@ test('two devices playing offline: every round from both survives', () => {
 });
 
 test('history stays bounded at HISTORY_KEEP, keeping the newest rounds', () => {
-  const a = doc({ progress: { s1: { m: Array.from({ length: 10 }, (_, i) => r(`a${i}`, i * 2)) }, s2: {} } });
-  const b = doc({ progress: { s1: { m: Array.from({ length: 10 }, (_, i) => r(`b${i}`, i * 2 + 1)) }, s2: {} } });
+  const N = HISTORY_KEEP;
+  const a = doc({ progress: { s1: { m: Array.from({ length: N }, (_, i) => r(`a${i}`, i * 2)) }, s2: {} } });
+  const b = doc({ progress: { s1: { m: Array.from({ length: N }, (_, i) => r(`b${i}`, i * 2 + 1)) }, s2: {} } });
   const m = mergeDocs(a, b).progress.s1.m;
   assert.equal(m.length, HISTORY_KEEP);
-  assert.equal(m.at(-1).id, 'b9');
-  assert.equal(m[0].t, 20 - HISTORY_KEEP);
+  assert.equal(m.at(-1).id, `b${N - 1}`);
+  assert.equal(m[0].t, 2 * N - HISTORY_KEEP);
 });
 
 test('readiness: union by id, sorted by time', () => {
@@ -128,4 +129,90 @@ test('family codes compare loosely on case, spaces and dashes', () => {
   assert.equal(normaliseCode('  Tiger Lamp_Rose 42 '), 'tiger-lamp-rose-42');
   assert.equal(normaliseCode('tiger--lamp-rose-42'), 'tiger-lamp-rose-42');
   assert.equal(normaliseCode(''), '');
+});
+
+/* ---------- sessions and wrong taps (added later; old documents have neither) ---------- */
+
+const ses = (id, start, rounds, extra = {}) => ({ id, d: '2026-11-10', start, end: start + 60000 * rounds, stages: [1], rounds, correct: rounds, ...extra });
+
+test('sessions: union by id, the more complete version of a session wins, oldest first', () => {
+  const a = doc({ sessions: [ses('s1', 100, 2), ses('s2', 300, 6)] });
+  const b = doc({ sessions: [ses('s1', 100, 5), ses('s3', 200, 1)] });
+  const m = mergeDocs(a, b);
+  assert.deepEqual(ids(m.sessions), ['s1', 's3', 's2']);
+  assert.equal(m.sessions[0].rounds, 5, 'the version with more rounds wins');
+  assert.equal(canon(mergeDocs(a, b)), canon(mergeDocs(b, a)), 'commutative');
+  const c = doc({ sessions: [ses('s1', 100, 5, { end: 999999 })] });
+  assert.equal(mergeDocs(b, c).sessions.find((x) => x.id === 's1').end, 999999, 'same rounds: later end wins');
+  assert.equal(canon(mergeDocs(mergeDocs(a, b), c)), canon(mergeDocs(a, mergeDocs(b, c))), 'associative');
+});
+
+test('sessions: a reset drops sessions started before it; the list stays bounded', async () => {
+  const { SESSION_KEEP } = await import('../../js/syncdoc.js');
+  const m = mergeDocs(doc({ resetAt: 250 }), doc({ sessions: [ses('old', 100, 3), ses('new', 300, 3)] }));
+  assert.deepEqual(ids(m.sessions), ['new']);
+  const many = doc({ sessions: Array.from({ length: SESSION_KEEP + 20 }, (_, i) => ses(`x${i}`, i, 1)) });
+  const out = mergeDocs(many, emptyDoc()).sessions;
+  assert.equal(out.length, SESSION_KEEP);
+  assert.equal(out.at(-1).id, `x${SESSION_KEEP + 19}`, 'the newest are kept');
+});
+
+test('old documents without sessions or wrong taps merge with new ones unchanged', () => {
+  // An old server doc (before this version): no sessions key, rounds without ses or wrong.
+  const old = { settings: { speakWords: true, roundsPerSession: 6 }, settingsAt: 5, progress: { s1: { m: [r('o1', 1), r('o2', 2, 0)] }, s2: {} }, resetAt: 0, readiness: [{ id: 'q', at: 1, d: '2026-11-01', correct: true }], recordings: { m: { updatedAt: 3, mime: 'audio/wav' } } };
+  const fresh = doc({ progress: { s1: { m: [{ ...r('n1', 3, 0), ses: 'S', wrong: [{ w: 'nose', s: 'n' }] }] }, s2: {} }, sessions: [ses('S', 3, 1)] });
+  const m = mergeDocs(old, fresh);
+  assert.deepEqual(ids(m.progress.s1.m), ['o1', 'o2', 'n1']);
+  assert.deepEqual(m.progress.s1.m[0], r('o1', 1), 'old rounds are not changed');
+  assert.deepEqual(m.progress.s1.m[2].wrong, [{ w: 'nose', s: 'n' }]);
+  assert.deepEqual(ids(m.sessions), ['S']);
+  assert.deepEqual(m.readiness, old.readiness);
+  assert.equal(m.settingsAt, 5);
+  assert.deepEqual(mergeDocs(old, emptyDoc()).sessions, [], 'an old doc reads as no sessions');
+  assert.deepEqual(coreOf(old).sessions, []);
+});
+
+test('sanitiseCore keeps sessions and wrong taps, and drops malformed ones', () => {
+  const valid = new Set(['m', 'n']);
+  const out = sanitiseCore({
+    progress: { s1: { m: [
+      { ...r('a', 1, 0), ses: 'S1', wrong: [{ w: 'nose', s: 'n' }, { g: 'n', s: 'n' }, { w: 'pig' }, { s: 'n' }, 'x', { w: 'y'.repeat(41) }, { g: 'm', s: 'bad id!' }] },
+      { ...r('b', 2), ses: 'bad id!', wrong: [] },
+      { ...r('c', 3), wrong: Array.from({ length: 20 }, () => ({ w: 'nut', s: 'n' })) },
+    ] } },
+    sessions: [
+      ses('S1', 10, 6, { correct: 9, stages: [2, 1, 1, 3], extra: '<b>' }),
+      { id: 'bad id!', start: 1, end: 2 }, { id: 'nostart', end: 2 }, 'junk',
+      { id: 'S2', start: 50, end: 40, rounds: -3, correct: 2, d: 'not-a-day' },
+    ],
+  }, valid);
+  const [a, b, c] = out.progress.s1.m;
+  assert.deepEqual(a, { ...r('a', 1, 0), ses: 'S1', wrong: [{ w: 'nose', s: 'n' }, { g: 'n', s: 'n' }, { w: 'pig' }, { g: 'm' }] });
+  assert.deepEqual(b, r('b', 2), 'bad session id and empty wrong list are left out');
+  assert.equal(c.wrong.length, 8, 'at most 8 wrong taps per round');
+  assert.deepEqual(out.sessions, [
+    { id: 'S1', d: '2026-11-10', start: 10, end: 10 + 6 * 60000, stages: [1, 2], rounds: 6, correct: 6 },
+    { id: 'S2', start: 50, end: 50, stages: [], rounds: 0, correct: 0 },
+  ]);
+  // An old client's doc (no sessions key at all) is still accepted.
+  const old = sanitiseCore({ progress: { s1: { m: [r('z', 1)] } }, readiness: [] }, valid);
+  assert.deepEqual(old.sessions, []);
+  assert.deepEqual(old.progress.s1.m, [r('z', 1)]);
+});
+
+test('with sessions and wrong taps, a client and the server still converge after one push', () => {
+  const valid = new Set(['m', 'n']);
+  const local = doc({
+    settings: { speakWords: true, roundsPerSession: 6 }, settingsAt: 1,
+    progress: { s1: { m: [{ ...r('a', 1, 0), ses: 'S', wrong: [{ w: 'nose', s: 'n' }, { w: 'shoe' }] }, { ...r('b', 2), ses: 'S' }] }, s2: { n: [{ ...r('c', 3, 0), ses: 'S', wrong: [{ g: 'm', s: 'm' }] }] } },
+    sessions: [{ id: 'S', d: '2026-11-10', start: 0, end: 3, stages: [1, 2], rounds: 3, correct: 1 }],
+  });
+  const server = doc({ progress: { s1: { m: [r('old', 0)] }, s2: {} } }); // an old-format server doc
+  const merged = mergeDocs(local, server);
+  const stored = mergeDocs(server, { ...sanitiseCore(coreOf(merged), valid), recordings: {} });
+  assert.equal(canon(coreOf(merged)), canon(coreOf(stored)), 'nothing is stripped, so no endless re-pushing');
+  // The session grows on the device: the next push replaces the stored version.
+  const grown = { ...local, sessions: [{ ...local.sessions[0], rounds: 4, correct: 2, end: 9 }] };
+  const again = mergeDocs(stored, { ...sanitiseCore(coreOf(mergeDocs(grown, stored)), valid), recordings: {} });
+  assert.equal(again.sessions[0].rounds, 4);
 });

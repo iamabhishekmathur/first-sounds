@@ -423,7 +423,7 @@ export function settings(app) {
   const exportStatus = h('p', { class: 'p-sub', 'data-testid': 'export-status' });
 
   const askReset = () => resetBox.replaceChildren(
-    notice('warn', 'This erases all progress and readiness results. Your recordings and settings are kept.'),
+    notice('warn', 'This erases all progress, readiness results and the Tracker\'s session history. Your recordings and settings are kept.'),
     h('div', { class: 'p-actions' },
       h('button', {
         class: 'p-btn danger', type: 'button', 'data-testid': 'confirm-reset',
@@ -431,6 +431,7 @@ export function settings(app) {
           await app.store.resetProgress();
           app.progress = { s1: {}, s2: {} };
           app.readiness = [];
+          app.sessions = [];
           app.meta.resetAt = Date.now(); // synced devices drop everything played before this
           await app.save('meta');
           app.sync?.changed('reset');

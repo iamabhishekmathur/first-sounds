@@ -4,13 +4,23 @@
 import { h, mount, setMode, holdGate, icon } from './ui.js';
 import { planRound, recordRound, readinessEligible, planReadiness, canPlay } from './logic.js';
 import * as audio from './audio.js';
-import { newId } from './syncdoc.js';
+import { newId, MAX_WRONG_TAPS } from './syncdoc.js';
 
 const RESOLVE_DELAY = 2200;
 
 /** How the parent prompt names each position mode ("…tap the picture that <phrase>."). */
 export const POSITION_PHRASE = { start: 'starts with this sound', end: 'ends with this sound', anywhere: 'has this sound in it' };
 
+/** Adds a played round to the session record and saves the record into app.sessions. */
+function noteSessionRound(app, s, stage, firstTry, t) {
+  const r = s.record;
+  r.rounds += 1;
+  if (firstTry) r.correct += 1;
+  r.end = Math.max(r.start, t);
+  if (!r.stages.includes(stage)) r.stages = [...r.stages, stage].sort();
+  const copy = { ...r, stages: [...r.stages] };
+  app.sessions = [...(app.sessions || []).filter((x) => x.id !== r.id), copy];
+}
 
 function topbar(app, s) {
   const gate = holdGate(() => app.go('parentMenu'));
@@ -44,6 +54,10 @@ export function startSession(app) {
   audio.unlock();
   const total = app.settings.roundsPerSession;
   const s = { total, done: 0, lastId: null, lastWord: null, newCount: { 1: 0, 2: 0 }, readinessDone: false, readinessAt: Math.floor(total / 2) };
+  // The session record for the parent's Tracker. Saved from its first played round on, and updated
+  // after every round; it rides along with the round's (debounced) progress push.
+  const now = Date.now();
+  s.record = { id: newId(), d: app.today(), start: now, end: now, stages: [], rounds: 0, correct: 0 };
   app.session = s;
   next(app, s);
 }
@@ -78,6 +92,7 @@ function renderRound(app, s, round) {
   const playTarget = () => audio.playRecording(rec);
   const speak = (w) => audio.speakWord(w, app.settings.speakWords);
   let wrongs = 0;
+  const wrongTaps = []; // what was tapped wrongly, for the Tracker's mix-ups
   let resolved = false;
 
   const choiceEls = round.choices.map((ch) => {
@@ -106,8 +121,12 @@ function renderRound(app, s, round) {
     if (resolved) { if (ch.kind === 'word') speak(ch.word); return; }
     if (ch.correct) {
       resolved = true;
-      app.progress = recordRound(app.progress, round.stage, round.target.id, wrongs === 0, app.today(), { id: newId(), t: Date.now() });
+      const extra = { id: newId(), t: Date.now(), ses: s.record.id };
+      if (wrongTaps.length) extra.wrong = wrongTaps;
+      app.progress = recordRound(app.progress, round.stage, round.target.id, wrongs === 0, app.today(), extra);
+      noteSessionRound(app, s, round.stage, wrongs === 0, extra.t);
       app.save('progress');
+      app.save('sessions');
       s.done += 1;
       el.classList.remove('glow');
       el.classList.add('happy');
@@ -119,6 +138,11 @@ function renderRound(app, s, round) {
       return;
     }
     wrongs += 1;
+    if (wrongTaps.length < MAX_WRONG_TAPS) {
+      const tap = ch.kind === 'word' ? { w: ch.word } : { g: ch.grapheme };
+      if (ch.soundId) tap.s = ch.soundId;
+      wrongTaps.push(tap);
+    }
     el.classList.remove('wiggle');
     void el.offsetWidth; // restart the animation
     el.classList.add('wiggle');

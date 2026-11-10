@@ -90,3 +90,34 @@ test('erase everything needs an explicit confirmation header', async () => {
   assert.equal(srv.api.backend.blobs.size, 0);
   assert.equal((await (await call('state')).json()).empty, true);
 });
+
+test('state: accepts old documents (no sessions, no wrong taps) and new ones, and merges both', async () => {
+  await call('state', { method: 'DELETE', headers: { 'x-confirm': 'erase-everything' } });
+  // A blob written by the previous version of the server (before sessions existed).
+  const oldBlob = { settings: { speakWords: true, roundsPerSession: 6 }, settingsAt: 1, progress: { s1: { m: [{ c: 1, d: '2026-11-01', id: 'old1', t: 1 }] }, s2: {} }, resetAt: 0, readiness: [{ id: 'rq', at: 1, d: '2026-11-01', correct: true }] };
+  await srv.api.backend.put('state/push/0000000000001-oldver.json', Buffer.from(JSON.stringify(oldBlob)), 'application/json');
+  const put = (body) => call('state', { method: 'PUT', body: JSON.stringify(body), headers: { 'content-type': 'application/json' } });
+  // An old client's push: still accepted.
+  let res = await put({ progress: { s1: { s: [{ c: 0, d: '2026-11-02', id: 'old2', t: 2 }] } } });
+  assert.equal(res.status, 200);
+  assert.deepEqual((await res.json()).sessions, []);
+  // A new client's push with a session and wrong taps.
+  const session = { id: 'S1', d: '2026-11-10', start: 100, end: 400100, stages: [1], rounds: 2, correct: 1 };
+  const round = { c: 0, d: '2026-11-10', id: 'new1', t: 200, ses: 'S1', wrong: [{ w: 'nose', s: 'n' }, { w: 'cup' }] };
+  res = await put({ progress: { s1: { m: [round] } }, sessions: [session] });
+  const stored = await res.json();
+  assert.deepEqual(stored.sessions, [session], 'a put answers with the session it stored, unchanged');
+  assert.deepEqual(stored.progress.s1.m, [round]);
+  const s = await (await call('state')).json();
+  assert.deepEqual(s.progress.s1.m.map((x) => x.id), ['old1', 'new1']);
+  assert.deepEqual(s.progress.s1.m[0], oldBlob.progress.s1.m[0], 'old rounds read back exactly');
+  assert.deepEqual(s.progress.s1.m[1], round);
+  assert.deepEqual(s.progress.s1.s.map((x) => x.id), ['old2']);
+  assert.deepEqual(s.sessions, [session]);
+  assert.deepEqual(s.readiness, oldBlob.readiness);
+  // The session grows on the device: the version with more rounds wins on the server.
+  await put({ sessions: [{ ...session, rounds: 5, correct: 4, end: 900000 }] });
+  const s2 = await (await call('state')).json();
+  assert.equal(s2.sessions.length, 1);
+  assert.equal(s2.sessions[0].rounds, 5);
+});

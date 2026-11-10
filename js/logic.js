@@ -1,7 +1,9 @@
 // Scheduling and mastery. Pure functions only: no DOM, no storage, no clock.
 // Randomness comes in as `rng` (a function returning [0,1)) and dates as 'YYYY-MM-DD' strings.
 
-export const HISTORY_KEEP = 12;
+// Rounds kept per sound per stage. Mastery looks at the last 6 only; the rest feeds the parent's
+// Tracker (per-sound days practised and trends). Bounded so the sync doc stays small.
+export const HISTORY_KEEP = 30;
 /** A sound needs at least this many words with it in a position to be tested in that position. */
 export const MIN_WORDS_FOR_MODE = 4;
 export const MIN_WORDS_FOR_TARGET = MIN_WORDS_FOR_MODE;

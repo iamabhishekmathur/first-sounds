@@ -5,17 +5,26 @@
 //   settings:   { speakWords, roundsPerSession } | null,  settingsAt: ms   (last writer wins)
 //   progress:   { s1: { [soundId]: [round] }, s2: {...} },  resetAt: ms     (union of rounds by id)
 //   readiness:  [ { id, d, pair, asked, chose, correct, at } ]              (union by id)
+//   sessions:   [ session ]                                                (union by id)
 //   recordings: { [soundId]: { updatedAt, mime, durationMs, trimmed, size } } (last writer wins)
 // }
-// round = { c: 1|0, d: 'YYYY-MM-DD', id, t: ms }.
-// A progress reset is a tombstone: rounds and readiness results older than resetAt are dropped.
+// round = { c: 1|0, d: 'YYYY-MM-DD', id, t: ms, ses?: session id, wrong?: [tap] }
+//   tap = { w: word } (a picture) or { g: grapheme } (a letter), plus s: the sound it stands for
+//   (absent for a picture in an "anywhere" round). Rounds played before sessions have neither.
+// session = { id, d: 'YYYY-MM-DD', start: ms, end: ms, stages: [1|2], rounds, correct }
+//   A session grows while it is played (same id), so of two versions the one with more rounds wins.
+// A progress reset is a tombstone: rounds, readiness results and sessions older than resetAt are dropped.
+// Documents written before sessions existed simply have none: every field is optional on input.
 
 import { HISTORY_KEEP } from './logic.js';
 
 export const STAGES = ['s1', 's2'];
+/** Sessions kept (newest): about a year of daily play, a few tens of KB. */
+export const SESSION_KEEP = 500;
+export const MAX_WRONG_TAPS = 8;
 
 export function emptyDoc() {
-  return { settings: null, settingsAt: 0, progress: { s1: {}, s2: {} }, resetAt: 0, readiness: [], recordings: {} };
+  return { settings: null, settingsAt: 0, progress: { s1: {}, s2: {} }, resetAt: 0, readiness: [], sessions: [], recordings: {} };
 }
 
 export function newId() {
@@ -76,6 +85,27 @@ function unionById(a, b) {
   return [...map.values()];
 }
 
+/** Of two versions of one session, the more complete one (more rounds, then later end) wins. */
+function newerSession(x, y) {
+  const rx = num(x.rounds);
+  const ry = num(y.rounds);
+  if (rx !== ry) return rx > ry ? x : y;
+  const ex = num(x.end);
+  const ey = num(y.end);
+  if (ex !== ey) return ex > ey ? x : y;
+  return canon(x) >= canon(y) ? x : y;
+}
+
+export function mergeSessions(a, b) {
+  const map = new Map();
+  for (const x of [...(Array.isArray(a) ? a : []), ...(Array.isArray(b) ? b : [])]) {
+    if (!x || !x.id) continue;
+    const cur = map.get(x.id);
+    map.set(x.id, cur ? newerSession(cur, x) : x);
+  }
+  return [...map.values()];
+}
+
 /** Canonical JSON (sorted keys), used for tie-breaks and change detection. */
 export function canon(v) {
   if (Array.isArray(v)) return `[${v.map(canon).join(',')}]`;
@@ -87,6 +117,8 @@ export function canon(v) {
  * Merges two docs without losing data. Commutative: merge(a, b) equals merge(b, a).
  * - rounds: union by id, minus those before the latest reset, oldest first, last HISTORY_KEEP per sound
  * - readiness: union by id, minus those before the latest reset, oldest first
+ * - sessions: union by id (the version with more rounds wins), minus those started before the
+ *   latest reset, oldest first, the last SESSION_KEEP
  * - settings and each recording: the newer timestamp wins (ties broken deterministically)
  */
 export function mergeDocs(a, b) {
@@ -107,6 +139,8 @@ export function mergeDocs(a, b) {
   }
 
   const readiness = unionById(a.readiness, b.readiness).filter((r) => num(r.at) >= resetAt).sort(byTimeThenId('at'));
+  const sessions = mergeSessions(a.sessions, b.sessions).filter((x) => num(x.start) >= resetAt)
+    .sort(byTimeThenId('start')).slice(-SESSION_KEEP);
 
   let settings;
   let settingsAt;
@@ -133,13 +167,16 @@ export function mergeDocs(a, b) {
     recordings[id] = tx !== ty ? (tx > ty ? x : y) : (canon(x) >= canon(y) ? x : y);
   }
 
-  return { settings, settingsAt, progress, resetAt, readiness, recordings };
+  return { settings, settingsAt, progress, resetAt, readiness, sessions, recordings };
 }
 
 /** The parts of a doc a client sends with PUT /api/state (recordings travel separately). */
 export function coreOf(doc) {
   const d = doc || emptyDoc();
-  return { settings: d.settings || null, settingsAt: num(d.settingsAt), progress: d.progress || { s1: {}, s2: {} }, resetAt: num(d.resetAt), readiness: d.readiness || [] };
+  return {
+    settings: d.settings || null, settingsAt: num(d.settingsAt), progress: d.progress || { s1: {}, s2: {} },
+    resetAt: num(d.resetAt), readiness: d.readiness || [], sessions: d.sessions || [],
+  };
 }
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
@@ -166,7 +203,7 @@ export function sanitiseCore(input, validIds) {
       if (!validIds.has(sid) || !Array.isArray(hist)) continue;
       const list = hist.slice(-200).filter((r) => r && typeof r === 'object' && typeof r.id === 'string' && ID.test(r.id)
         && Number.isFinite(r.t) && typeof r.d === 'string' && (DAY.test(r.d) || r.d.length <= 20))
-        .map((r) => ({ c: r.c ? 1 : 0, d: r.d, id: r.id, t: r.t }));
+        .map(cleanRound);
       if (list.length) out.progress[st][sid] = list;
     }
   }
@@ -178,5 +215,38 @@ export function sanitiseCore(input, validIds) {
       if ('correct' in r) o.correct = !!r.correct;
       return o;
     });
+  out.sessions = (Array.isArray(d.sessions) ? d.sessions : []).slice(-SESSION_KEEP * 2).map(cleanSession).filter(Boolean);
   return out;
+}
+
+const count = (x) => Math.min(10000, Math.max(0, Math.round(num(x))));
+
+/** A round as stored: the fields a client writes, nothing else. Older rounds have no ses or wrong. */
+function cleanRound(r) {
+  const o = { c: r.c ? 1 : 0, d: r.d, id: r.id, t: r.t };
+  if (typeof r.ses === 'string' && ID.test(r.ses)) o.ses = r.ses;
+  if (Array.isArray(r.wrong)) {
+    const taps = r.wrong.slice(0, MAX_WRONG_TAPS).map((x) => {
+      if (!x || typeof x !== 'object') return null;
+      const tap = {};
+      if (str(x.w, 40) != null) tap.w = x.w;
+      else if (str(x.g, 12) != null) tap.g = x.g;
+      else return null;
+      // Any well-formed id is kept (not only known sounds), so a client and the server always agree.
+      if (typeof x.s === 'string' && ID.test(x.s)) tap.s = x.s;
+      return tap;
+    }).filter(Boolean);
+    if (taps.length) o.wrong = taps;
+  }
+  return o;
+}
+
+function cleanSession(x) {
+  if (!x || typeof x !== 'object' || typeof x.id !== 'string' || !ID.test(x.id)) return null;
+  if (!Number.isFinite(x.start) || !Number.isFinite(x.end)) return null;
+  const o = { id: x.id, start: x.start, end: Math.max(x.start, x.end), rounds: count(x.rounds), correct: count(x.correct) };
+  if (typeof x.d === 'string' && DAY.test(x.d)) o.d = x.d;
+  o.stages = Array.isArray(x.stages) ? [...new Set(x.stages.filter((v) => v === 1 || v === 2))].sort() : [];
+  o.correct = Math.min(o.correct, o.rounds);
+  return o;
 }

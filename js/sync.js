@@ -35,6 +35,7 @@ export function docFromApp(app) {
     progress: { s1: app.progress.s1 || {}, s2: app.progress.s2 || {} },
     resetAt: app.meta.resetAt || 0,
     readiness: app.readiness,
+    sessions: app.sessions || [],
     recordings,
   };
 }
@@ -97,6 +98,10 @@ export function createSync(app, { base = 'api/', retryMs = 5000, debounceMs = 25
     if (canon(merged.readiness) !== canon(local.readiness)) {
       app.readiness = merged.readiness;
       writes.push(app.store.setKV('readiness', app.readiness));
+    }
+    if (canon(merged.sessions) !== canon(local.sessions)) {
+      app.sessions = merged.sessions;
+      writes.push(app.store.setKV('sessions', app.sessions));
     }
     if (merged.settings && (canon(merged.settings) !== canon(local.settings) || merged.settingsAt !== local.settingsAt)) {
       app.settings = { ...app.settings, ...merged.settings };
