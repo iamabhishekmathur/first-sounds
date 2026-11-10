@@ -30,9 +30,11 @@ family code"), the server becomes the source of truth and IndexedDB is the local
   others, and requests give up after 30 s so a stalled connection cannot block later syncs.
 - **Merge rules** (`js/syncdoc.js`, used by both the app and the server): every round has a stable
   id (old rounds get a deterministic one), and progress is the union of rounds by id, oldest first,
-  with the usual last 12 per sound kept. Readiness results are a union by id. Settings and each
+  with the last 30 per sound per stage kept (mastery looks at the last 6; the rest feeds the Tracker).
+  Readiness results are a union by id. Sessions are a union by id too; a session grows while it is
+  played, so of two versions of one session the one with more rounds wins (the last 500 are kept). Settings and each
   recording are last-writer-wins by timestamp. "Reset progress" is a timestamp: every device drops
-  only the rounds played before it. The first device to enter the code uploads everything, and
+  only the rounds, readiness results and sessions from before it. The first device to enter the code uploads everything, and
   later devices merge in the same way, so nothing is lost.
 - **Status** shows at the top of the parent pages only (synced / syncing / offline / server problem
   / code not accepted). The child screens never show sync state or wait for the network.
@@ -51,7 +53,7 @@ dashes.
 | Route | Purpose |
 | --- | --- |
 | `GET /api/state` | The family's doc: settings, progress, readiness, recording metadata |
-| `PUT /api/state` | Store a device's state, merged into the doc (checked and limited to known sound ids, 512 KB max). Answers with what it stored |
+| `PUT /api/state` | Store a device's state, merged into the doc (checked and limited to known sound ids, 512 KB max). Answers with what it stored. Documents from before sessions existed (no `sessions`, rounds without `ses`/`wrong`) are accepted as they are |
 | `GET/PUT/DELETE /api/recording?id=<sound id>[&v=<version>]` | One recording (audio only, 2 MB max; an older upload never replaces a newer one). `v` is the `version` that `GET /api/state` gives |
 | `DELETE /api/state` with `x-confirm: erase-everything` | Delete all recordings and state (not used by the app) |
 
@@ -67,6 +69,9 @@ cannot conflict and nothing is ever read stale.
   blobs, a request writes a snapshot of everything it read, then deletes exactly those blobs.
 - The earlier layout (`state/family.json` and `recordings/<sound>/<updatedAt>-<hex>`) is migrated by
   the first request that sees it: copied into the new layout, then the copied originals deleted.
+
+Sessions and wrong taps add no Blob operations: they travel inside the same debounced progress
+push (`PUT /api/state`) as the rounds they belong to.
 
 Operations are kept few because the Hobby plan includes 2,000 Blob "advanced" operations (puts and
 lists) a month, and the store stops working for the rest of the period beyond that: each PUT is one
@@ -97,6 +102,36 @@ or `screenshots/`) as a production deployment, either with `vercel deploy --prod
 Locally, `node tests/server.mjs` also serves a fake of the API (an in-memory store, using the same
 `api/_lib/core.js`). It accepts the code in `$FAMILY_CODE`, or `local-test-code-11` by default.
 
+## The Tracker (parent area)
+
+Parent area > Tracker shows how practice is going. Every figure comes from pure functions in
+`js/tracker.js` (unit tested); `js/tracker-view.js` only renders them, with small inline SVG charts
+(text labels, hover titles, and a "show the numbers" table, so nothing is colour-only).
+
+- **Summary:** days practised in the last 7 and 30 days, sessions and minutes, right-first-time in the
+  last 7 days against the 7 before, sounds solid per stage (out of the game targets), readiness check.
+- **Over time** (30 days): rounds per day, right-first-time per day, solid sounds per stage.
+- **Recent sessions:** date, time of day, length, stage(s), rounds, right first time.
+- **Sounds:** one row per sound with group, mode, status and last-6 score per stage, days practised,
+  last practised and a trend (the last 8 rounds of the stage being worked on; up/down compares the
+  last 4 with the 4 before). Ordered "needs attention first" (learning sounds with the lowest recent
+  score first), or by group, recency or days.
+- **Mix-ups:** target sound, then the sound tapped instead (in an "anywhere" round, the picture),
+  with counts.
+- **Recordings:** sounds still to record (game targets first) and recordings not trimmed.
+
+What is recorded for it (from this version on; older data simply has none and still counts):
+
+- `kv.sessions`: `[{ id, d, start, end, stages: [1|2], rounds, correct }]`, one per tap on Play,
+  saved from its first round on and updated after every round.
+- Each round gains `ses` (its session id) and, if any, `wrong: [{ w: word } | { g: grapheme }, s?]`
+  where `s` is the sound the tapped picture or letter stands for in that round.
+
+Per-day figures use a session's own totals for its rounds, plus every round with no known session
+(rounds played before sessions existed), so nothing is counted twice. Solid-over-time is worked out
+from each sound's kept history; when a history has been cut to 30 rounds, earlier days use the
+status of its oldest kept rounds. A brand-new install shows an explanation instead of empty figures.
+
 ## Tests
 
 ```sh
@@ -113,6 +148,12 @@ Locally, `node tests/server.mjs` also serves a fake of the API (an in-memory sto
   `tests/server.mjs`. Covers first run, recording and persistence, the parent gate, microphone
   denied or unavailable, storage unavailable, a full session, stage 2 unlocking, the readiness
   check, settings, reset, and export/import.
+- `tests/browser/tracker.test.mjs`: an "ends with" and a "has this sound" round with their parent
+  prompts (Hear it and See it), a session recorded and shown in the Tracker, the empty state, and
+  loading data saved by the previous version (an old local store and an old server doc).
+- `tests/unit/modes.test.mjs` (position modes and round rules per mode) and
+  `tests/unit/tracker.test.mjs` (the Tracker's figures). `tests/fixtures/sounds.modes.json` has
+  sounds in all three modes in group 1 (m and s start, ng end, oo anywhere).
 - `tests/browser/realdata.test.mjs` checks the real `data/sounds.json`. It is skipped if the file
   is missing.
 - `tests/browser/sync.test.mjs`: entering the code, first upload, a fresh profile pulling the same
@@ -133,18 +174,26 @@ mastery and readiness), `?seed=<n>` (repeatable randomness), `?db=<name>` (Index
 | `js/sync.js`, `js/syncdoc.js` | Sync with the server; the sync document and its merge rules |
 | `api/` | Vercel functions for sync (`_lib/` holds shared code, not routes) |
 | `js/audio.js` | Recording (MediaRecorder), silence trimming, playback (Web Audio), tones, word speech |
-| `js/logic.js` | Pure mastery, unlocking, target choice and distractor rules (no DOM) |
+| `js/logic.js` | Pure position modes, mastery, unlocking, target choice and distractor rules (no DOM) |
 | `js/game.js` | Child screens: home, Hear it, See it, readiness, all done |
 | `js/parent.js` | Welcome, parent menu, recording studio, progress, settings and backup |
+| `js/tracker.js`, `js/tracker-view.js` | The Tracker: pure figures, and the screen that renders them |
 | `js/ui.js`, `js/app.js` | DOM helpers and parent gate; boot, shared state, navigation |
 
 ## The data file
 
 `data/sounds.json` (`version: 1`) has `sounds`, `words` and `readinessPairs`. A word "starts with"
-a sound when that sound is `phonemes[0]`. `graphemes[0]` is the letter shown to the child. Only
-sounds with at least 3 starting words are game targets; this is worked out from the data. Two
-sounds that show the same `graphemes[0]` (such as `th_unvoiced` and `th_voiced`) are never offered
-in the same round. If the file fails validation the app shows the errors to the parent and does
+a sound when that sound is `phonemes[0]` and "ends with" it when it is the last phoneme.
+`graphemes[0]` is the letter shown to the child. Two sounds that show the same `graphemes[0]` (such
+as `th_unvoiced` and `th_voiced`) are never offered in the same round.
+
+**Position modes.** Each sound gets a mode, worked out from the words (never from the sound id), in
+the order children develop the skill: `start` if at least 4 words start with it, otherwise `end` if
+at least 4 end with it, otherwise `anywhere` if at least 4 contain it. A sound with fewer than 4 words
+containing it is not a game target. The parent prompt names the mode ("…the picture that starts with
+this sound", "…ends with this sound", "…has this sound in it"), in Hear it and in See it's
+letter-to-picture rounds. The studio, Progress and Tracker show each sound's mode, or why it is not a
+target. Mastery, unlocking and scheduling stay per sound per stage. If the file fails validation the app shows the errors to the parent and does
 not start. Warnings are listed under the parent menu.
 
 ## How the rules are applied
@@ -157,6 +206,13 @@ not start. Warnings are listed under the parent menu.
   when no more than 3 are learning, and no more than 2 per session (per stage) so that the first
   session is not four new sounds in six rounds.
 - **Choices**: 2, or 3 once a sound is going well (solid, or 3 of its last 4 right first time).
+  The right picture has the target in the sound's mode position. A distractor never contains the
+  target (or a sound shown with the same letters) anywhere, has a different sound in the tested
+  position from the other distractors, and while the target is not solid has none of its confusable
+  sounds in the tested position (for `anywhere`: nowhere in the word).
+- **After a data change**: a group the child has already played in stays open, and a child who has
+  played keeps playing, even if the change made new targets of earlier (not yet recorded or solid)
+  sounds, as position modes did for the th sounds, ng and the long vowels.
 - **Readiness**: a bonus round half way through a session, at most once a day, after group 1 is
   solid in See it. It does not count toward the session's rounds.
 

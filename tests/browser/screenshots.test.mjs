@@ -3,6 +3,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
 import { setup, newPage, url, open, seed, holdGate, hist, answerRound, GROUP1 } from './helpers.mjs';
+import { MODES_FIXTURE, realisticHistory, seedTracker } from './trackerdata.mjs';
 
 const OUT = new URL('../../screenshots/', import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
@@ -171,4 +172,44 @@ test('portrait: phone and iPad', async () => {
   await land.page.waitForSelector('[data-screen="round"]');
   await shot(land.page, '26-phone-landscape-hear-it');
   await land.context.close();
+});
+
+test('position modes and the Tracker', async () => {
+  // An "ends with" round (ng in the modes fixture).
+  const m = await newPage(env, { scale: 2 });
+  const mp = { data: MODES_FIXTURE, seed: 3, today: '2026-11-10' };
+  await open(m.page, url(env, mp));
+  await seed(m.page, { recordings: ['m', 's', 'ng', 'ue'], progress: { s1: { m: [{ c: 1, d: '2026-11-09' }, { c: 0, d: '2026-11-09' }], s: [{ c: 1, d: '2026-11-09' }] }, s2: {} } });
+  await open(m.page, url(env, mp));
+  await m.page.tap('[data-testid="play"]');
+  await m.page.waitForSelector('[data-screen="round"][data-position="end"]');
+  await m.page.waitForTimeout(400);
+  await shot(m.page, '27-hear-it-ends-with');
+  await m.page.evaluate(() => globalThis.__fsApp.go('studio', { group: 1, sound: 'ng' }));
+  await shot(m.page, '28-studio-mode');
+  assert.deepEqual(m.errors, []);
+  await m.context.close();
+
+  // Brand-new install.
+  const e = await newPage(env, { scale: 2 });
+  await open(e.page, url(env, { data: MODES_FIXTURE, today: '2026-11-10' }));
+  await e.page.evaluate(() => globalThis.__fsApp.go('tracker'));
+  await shot(e.page, '29-tracker-empty');
+  await e.context.close();
+
+  // A month of realistic play; n and p recorded but not trimmed.
+  const hist30 = realisticHistory('2026-11-10');
+  const recs = ['m', 's', 'ng', 'ue', 'n', 't', 'sh', 'k', 'p', 'i', 'u', 'l'];
+  for (const [name, viewport] of [['30-tracker-ipad-landscape', { width: 1180, height: 820 }], ['31-tracker-ipad-portrait', { width: 820, height: 1180 }], ['32-tracker-laptop', { width: 1440, height: 900 }]]) {
+    const t = await newPage(env, { scale: name.includes('laptop') ? 1 : 2, viewport });
+    await open(t.page, url(env, { data: MODES_FIXTURE, today: '2026-11-10' }));
+    await seedTracker(t.page, { recordings: recs, untrimmed: ['n', 'p'], ...hist30 });
+    await open(t.page, url(env, { data: MODES_FIXTURE, today: '2026-11-10' }));
+    await t.page.evaluate(() => globalThis.__fsApp.go('tracker'));
+    await t.page.waitForSelector('[data-testid="tracker-summary"]');
+    await shot(t.page, name);
+    await t.page.screenshot({ path: `${OUT}${name}-full.png`, fullPage: true });
+    assert.deepEqual(t.errors, []);
+    await t.context.close();
+  }
 });
