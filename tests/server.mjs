@@ -19,14 +19,17 @@ const TYPES = {
 
 /**
  * opts.familyCode: code the fake API accepts. opts.dataFile: sound ids it accepts (default: the
- * real data file). The returned `api` has the in-memory `backend`, plus `down` (true: every API
- * request fails with 503) and `requests` (a log of method + path).
+ * real data file). opts.backendOptions: knobs for the in-memory store (latencyMs, listLagMs). The
+ * returned `api` has the in-memory `backend`, `readDoc()` (the merged server doc), `down` (true:
+ * every API request fails with 503), `fail` (optional (req, url) => true: that request fails with 504)
+ * and `requests` (a log of method + path).
  */
-export function startServer(port = 0, { familyCode = 'local-test-code-11', dataFile = 'data/sounds.json' } = {}) {
+export function startServer(port = 0, { familyCode = 'local-test-code-11', dataFile = 'data/sounds.json', backendOptions = {}, deadlineMs } = {}) {
   const data = JSON.parse(readFileSync(path.join(ROOT, dataFile), 'utf8'));
-  const backend = memoryBackend();
+  const backend = memoryBackend(backendOptions);
   const api = { backend, down: false, requests: [], familyCode };
-  const handle = makeApi({ backend, familyCode: () => api.familyCode, validIds: new Set(data.sounds.map((x) => x.id)) });
+  const handle = makeApi({ backend, familyCode: () => api.familyCode, validIds: new Set(data.sounds.map((x) => x.id)), deadlineMs });
+  api.readDoc = handle.readDoc; // the merged doc on the server, or null when it is empty
   const routes = { '/api/state': handle('state'), '/api/recording': handle('recording') };
   const server = http.createServer(async (req, res) => {
     try {
@@ -35,6 +38,7 @@ export function startServer(port = 0, { familyCode = 'local-test-code-11', dataF
         api.requests.push(`${req.method} ${url.pathname}${url.search}`);
         const route = routes[url.pathname];
         if (api.down) { res.writeHead(503).end(); return; }
+        if (api.fail && api.fail(req, url)) { res.writeHead(504).end(); return; }
         if (!route) { res.writeHead(404).end(); return; }
         await route(req, res);
         return;

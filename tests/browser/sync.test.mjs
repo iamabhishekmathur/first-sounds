@@ -10,11 +10,12 @@ beforeEach(() => {
   env.api.backend.blobs.clear();
   env.api.familyCode = FAMILY_CODE;
   env.api.down = false;
+  env.api.fail = null;
 });
 
 const FAST = { syncRetry: 300, syncDebounce: 150 };
 const syncUrl = (params = {}) => url(env, { ...FAST, ...params });
-const server = () => env.api.backend.readJSON('state/family.json').then((x) => x && x.value);
+const server = () => env.api.readDoc();
 const status = (page) => page.getAttribute('[data-testid="sync-status"]', 'data-status');
 const waitStatus = (page, s, timeout = 8000) => page.waitForSelector(`[data-testid="sync-status"][data-status="${s}"]`, { timeout });
 const roundsOf = (progress) => Object.entries(progress[`s1`] || {}).flatMap(([sid, list]) => list.map((r) => `${sid}:${r.id}`)).sort();
@@ -183,6 +184,43 @@ test('server down: retries quietly until it is back', async () => {
   env.api.down = false;
   await waitStatus(a.page, 'synced', 10000);
   await a.context.close();
+});
+
+test('recordings whose upload failed stay queued and go up by themselves once the server works', async () => {
+  // As in production: the code is accepted, but most recording uploads time out (504).
+  env.api.fail = (req, u) => req.method === 'PUT' && u.pathname === '/api/recording' && u.searchParams.get('id') !== 'm';
+  const d = await newPage(env);
+  await open(d.page, syncUrl());
+  await seed(d.page, { recordings: GROUP1 });
+  await open(d.page, syncUrl());
+  await holdGate(d.page);
+  await enterCode(d.page);
+  await waitStatus(d.page, 'error');
+  assert.deepEqual(Object.keys((await server()).recordings), ['m'], 'only m reached the server');
+  await d.page.waitForTimeout(700);
+  const tries = env.api.requests.filter((r) => r === 'PUT /api/recording?id=s').length;
+  assert.ok(tries >= 2, `s retried on its own (${tries} tries)`);
+  assert.ok(env.api.requests.filter((r) => r === 'PUT /api/recording?id=t').length >= 2, 'a failure does not hold up the others');
+
+  // Server fixed: no taps, no reload. The retry timer uploads everything.
+  env.api.fail = null;
+  await waitFor(async () => { const x = await server(); return x && Object.keys(x.recordings).length === 4; }, 'all uploads', 10000);
+  await waitStatus(d.page, 'synced');
+
+  // Reopening the app (a fresh start with the saved code) also sends anything still queued.
+  env.api.fail = () => true;
+  await d.page.evaluate(async () => {
+    const app = globalThis.__fsApp;
+    const r = { ...app.recordings.get('a'), updatedAt: Date.now() };
+    await app.store.putRecording(r);
+  });
+  await open(d.page, syncUrl({ syncRetry: 60000 }));
+  await waitFor(() => d.page.evaluate(() => globalThis.__fsApp.sync.status === 'error'), 'failed start'); // child screen: no status shown
+  env.api.fail = null;
+  await open(d.page, syncUrl({ syncRetry: 60000 }));
+  const local = await d.page.evaluate(() => globalThis.__fsApp.recordings.get('a').updatedAt);
+  await waitFor(async () => (await server()).recordings.a.updatedAt === local, 'queued a after reopening');
+  await d.context.close();
 });
 
 test('two devices play offline at the same time: both keep every round after syncing', async () => {

@@ -58,15 +58,25 @@ export function createSync(app, { base = 'api/', retryMs = 5000, debounceMs = 25
     for (const fn of listeners) { try { fn(s); } catch { /* ignore */ } }
   }
 
-  async function api(method, path, { body, headers = {}, raw = false, withCode = code } = {}) {
-    let res;
+  // A request that hangs (a stalled mobile connection) is abandoned, so the cycle ends, a retry is
+  // scheduled and later triggers (foreground, online) are not stuck behind it.
+  async function api(method, path, { body, headers = {}, raw = false, withCode = code, timeoutMs = 30000 } = {}) {
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = ctl && setTimeout(() => ctl.abort(), timeoutMs);
     try {
-      res = await fetch(`${base}${path}`, { method, body, headers: { 'x-family-code': withCode, ...headers }, cache: 'no-store' });
-    } catch {
-      throw new ApiError(0, true);
+      let res;
+      try {
+        res = await fetch(`${base}${path}`, { method, body, headers: { 'x-family-code': withCode, ...headers }, cache: 'no-store', signal: ctl?.signal });
+      } catch {
+        throw new ApiError(0, true);
+      }
+      if (!res.ok) throw new ApiError(res.status);
+      return raw ? res : await res.json();
+    } catch (e) {
+      throw e instanceof ApiError ? e : new ApiError(0, true);
+    } finally {
+      clearTimeout(timer);
     }
-    if (!res.ok) throw new ApiError(res.status);
-    return raw ? res : res.json();
   }
 
   /** Merge a server doc into the app's state and the local cache. Synchronous up to the writes. */
@@ -130,14 +140,23 @@ export function createSync(app, { base = 'api/', retryMs = 5000, debounceMs = 25
     let changed = await applyDoc(server);
     const remote = { ...(server.recordings || {}) };
     const ids = [...new Set([...app.recordings.keys(), ...Object.keys(remote)])];
+    // Every recording that is newer here than on the server is the upload queue. One that fails
+    // does not hold up the others; the cycle then fails as a whole, so it is retried with the rest.
+    let failed = null;
     for (const id of ids) {
       const l = app.recordings.get(id);
       const s = remote[id];
-      if (s && (!l || s.updatedAt > (l.updatedAt || 0))) {
-        if (await download(id, s)) changed = true;
-      } else if (l && l.data && (!s || (l.updatedAt || 0) > s.updatedAt)) {
-        const meta = await upload(l);
-        if (meta) remote[id] = meta;
+      try {
+        if (s && (!l || s.updatedAt > (l.updatedAt || 0))) {
+          if (await download(id, s)) changed = true;
+        } else if (l && l.data && (!s || (l.updatedAt || 0) > s.updatedAt)) {
+          const meta = await upload(l);
+          if (meta) remote[id] = meta;
+        }
+      } catch (e) {
+        if (e.status === 401) throw e;
+        failed = failed || e;
+        log('sync-item-error', { id, status: e.status || 0 });
       }
     }
     const want = coreOf(docFromApp(app));
@@ -145,6 +164,7 @@ export function createSync(app, { base = 'api/', retryMs = 5000, debounceMs = 25
       server = await api('PUT', 'state', { body: JSON.stringify(want), headers: { 'content-type': 'application/json' } });
       if (await applyDoc(server)) changed = true;
     }
+    if (failed) throw failed;
     return changed;
   }
 
