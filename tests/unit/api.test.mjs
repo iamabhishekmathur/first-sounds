@@ -25,16 +25,18 @@ test('requests without the right code get a bare 401', async () => {
   assert.equal((await call('state', { code: ' Otter Maple Drum 07 ' })).status, 200, 'case and spacing do not matter');
 });
 
-test('state: empty at first, then merged on every put', async () => {
+test('state: empty at first, then every put is merged into it', async () => {
   await call('state', { method: 'DELETE', headers: { 'x-confirm': 'erase-everything' } });
   let s = await (await call('state')).json();
   assert.equal(s.empty, true);
   const put = (body) => call('state', { method: 'PUT', body: JSON.stringify(body), headers: { 'content-type': 'application/json' } }).then((r) => r.json());
   await put({ progress: { s1: { m: [{ c: 1, d: '2026-11-10', id: 'a', t: 1 }] } } });
   s = await put({ progress: { s1: { m: [{ c: 0, d: '2026-11-10', id: 'b', t: 2 }], nope: [{ c: 1, d: 'x', id: 'z', t: 1 }] } } });
-  assert.deepEqual(s.progress.s1.m.map((x) => x.id), ['a', 'b'], 'second device did not overwrite the first');
+  assert.deepEqual(s.progress.s1.m.map((x) => x.id), ['b'], 'a put answers with what it stored');
   assert.equal(s.progress.s1.nope, undefined, 'unknown sound ids are dropped');
-  // Concurrent puts from many devices: all rounds survive the etag retries.
+  s = await (await call('state')).json();
+  assert.deepEqual(s.progress.s1.m.map((x) => x.id), ['a', 'b'], 'second device did not overwrite the first');
+  // Concurrent puts from many devices: all rounds survive.
   await Promise.all(Array.from({ length: 8 }, (_, i) => put({ progress: { s1: { s: [{ c: 1, d: '2026-11-10', id: `p${i}`, t: 10 + i }] } } })));
   s = await (await call('state')).json();
   assert.equal(s.progress.s1.s.length, 8);
@@ -58,17 +60,22 @@ test('recordings: validated, last writer wins, older uploads never replace newer
   out = await (await putRec('m', newer, 2000)).json();
   assert.equal(out.stored, true);
   out = await (await putRec('m', first, 1500)).json();
-  assert.equal(out.stored, false, 'older recording refused');
+  assert.equal(out.recording.updatedAt, 1500, 'an older upload is stored as its own version');
   const got = await call('recording?id=m');
   assert.equal(got.status, 200);
   assert.equal(got.headers.get('content-type'), 'audio/wav');
   assert.equal(got.headers.get('x-updated-at'), '2000');
   assert.deepEqual(Buffer.from(await got.arrayBuffer()), newer);
-  const blobs = [...srv.api.backend.blobs.keys()].filter((k) => k.startsWith('recordings/m/'));
-  assert.equal(blobs.length, 1, 'the replaced version was deleted');
   const s = await (await call('state')).json();
-  assert.equal(s.recordings.m.updatedAt, 2000);
+  assert.equal(s.recordings.m.updatedAt, 2000, 'but never replaces the newer one');
   assert.equal(s.recordings.m.path, undefined, 'storage paths are not handed out');
+  const blobs = [...srv.api.backend.blobs.keys()].filter((k) => k.startsWith('recordings/m/'));
+  assert.equal(blobs.length, 1, 'the superseded versions were deleted');
+  // The version named in the state is read directly; a bad or stale name falls back to the newest.
+  for (const v of [s.recordings.m.version, '../../state/x', '1-1-t-0.wav']) {
+    const r = await call(`recording?id=m&v=${encodeURIComponent(v)}`);
+    assert.equal(r.headers.get('x-updated-at'), '2000', v);
+  }
 
   assert.equal((await call('recording?id=s')).status, 404);
   assert.equal((await call('recording?id=m', { method: 'DELETE' })).status, 200);

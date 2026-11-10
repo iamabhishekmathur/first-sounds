@@ -223,6 +223,19 @@ test('recordings whose upload failed stay queued and go up by themselves once th
   await d.context.close();
 });
 
+test('progress pushes reuse a recently fetched server doc (fewer store operations)', async () => {
+  const a = await syncedDevice();
+  await open(a.page, syncUrl());
+  await waitFor(() => a.page.evaluate(() => globalThis.__fsApp.sync.status === 'synced'), 'start sync');
+  const from = env.api.requests.length;
+  await playRounds(a.page, 2);
+  await waitFor(async () => roundsOf((await server()).progress).length >= 4, 'rounds pushed');
+  const reqs = env.api.requests.slice(from);
+  assert.ok(reqs.includes('PUT /api/state'), reqs.join(', '));
+  assert.ok(!reqs.includes('GET /api/state'), `no fetch before each push: ${reqs.join(', ')}`);
+  await a.context.close();
+});
+
 test('two devices play offline at the same time: both keep every round after syncing', async () => {
   const a = await syncedDevice();
   await waitFor(async () => { const x = await server(); return x && Object.keys(x.recordings).length === 4; }, 'upload');

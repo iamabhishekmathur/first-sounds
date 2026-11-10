@@ -13,13 +13,17 @@
 // is nothing to conflict on and nothing can be read stale (a pathname always has the same bytes).
 //   recordings/<id>/<updatedAt>-<durationMs>-<t|u>-<rand>.<ext>   one blob per uploaded version;
 //                                        the highest (updatedAt, pathname) wins, older ones are
-//                                        deleted after a newer upload.
+//                                        deleted by the next GET /api/state.
 //   state/push/<time>-<rand>.json      one blob per PUT /api/state (the sanitised core doc)
 //   state/snap/<time>-<rand>.json      a compaction: everything merged from the blobs it replaced
 // The state is the merge (js/syncdoc.js mergeDocs: unions by id, last writer wins) of every state
 // blob, so any number of them merge in any order to the same result. When there are more than
 // COMPACT_OVER, a request writes a new snapshot and then deletes exactly the blobs it read into it,
 // so concurrent compactions are safe (their snapshots are merged later like any other blob).
+//
+// Cost: on the Hobby plan Blob allows 2,000 "advanced" operations (puts and lists) a month, so only
+// GET /api/state lists. Each PUT is a single put, GET /api/recording reads the version the state
+// named (reads of immutable blobs are cached), and deletes are free.
 //
 // Legacy layout (before append-only): state/family.json (mutable, with recording metadata and
 // paths) and recordings/<id>/<updatedAt>-<hex>. The first request that sees them copies them into
@@ -93,6 +97,9 @@ export function parseRecordingPath(pathname) {
 }
 
 /** a before b: older updatedAt first, then pathname. The greatest version of a sound wins. */
+/** The file name of a version ("<updatedAt>-...<ext>"), handed to clients to fetch it directly. */
+const versionName = (path) => path.slice(path.lastIndexOf('/') + 1);
+
 const versionLess = (a, b) => a.updatedAt < b.updatedAt || (a.updatedAt === b.updatedAt && a.path < b.path);
 
 /** Duration of a PCM WAV file in ms, or null if it is not one. */
@@ -145,7 +152,7 @@ function publicDoc(doc) {
   const d = mergeDocs(doc, emptyDoc());
   const recordings = {};
   for (const [id, r] of Object.entries(d.recordings)) {
-    recordings[id] = { updatedAt: r.updatedAt, mime: r.mime, durationMs: r.durationMs, trimmed: r.trimmed, size: r.size };
+    recordings[id] = { updatedAt: r.updatedAt, mime: r.mime, durationMs: r.durationMs, trimmed: r.trimmed, size: r.size, version: r.path ? versionName(r.path) : r.version };
   }
   return { ...d, recordings };
 }
@@ -298,9 +305,16 @@ export function makeApi({ backend, familyCode, validIds, deadlineMs = 9000, log 
     return codeMatches(given, expected);
   }
 
+  /** Deletes superseded recording versions (deletes cost nothing). Returns the listing without them. */
+  async function pruneAll(items) {
+    const gone = [];
+    for (const list of Object.values(versionsOf(items))) gone.push(...await pruneOlder(list, list[list.length - 1]));
+    return gone.length ? items.filter((it) => !gone.includes(it.pathname)) : items;
+  }
+
   async function state(req, res) {
     if (req.method === 'GET') {
-      const items = await listing();
+      const items = await pruneAll(await listing());
       const st = await readState(items);
       await compact(st);
       const empty = !st.included.length && !Object.keys(recordingsOf(items)).length;
@@ -311,17 +325,10 @@ export function makeApi({ backend, familyCode, validIds, deadlineMs = 9000, log 
       let input;
       try { input = JSON.parse((await readBody(req, MAX_STATE_BYTES)).toString('utf8')); } catch (e) { throw e.status ? e : new HttpError(400, 'bad json'); }
       const core = sanitiseCore(input, validIds);
-      const items = await listing();
-      const st = await readState(items);
-      const merged = coreOf(mergeDocs(st.doc, core));
-      // Only a push that adds something is stored. The answer includes it either way, so the
-      // client never depends on the next listing showing the new blob.
-      if (canon(merged) !== canon(st.doc)) {
-        const path = `state/push/${stamp()}-${rand()}.json`;
-        await backend.put(path, Buffer.from(JSON.stringify(core)), 'application/json');
-        if (st.included.length + 1 > COMPACT_OVER) await compact({ doc: merged, included: [...st.included, path] });
-      }
-      send(res, 200, publicDoc({ ...merged, recordings: recordingsOf(items) }));
+      // One put and nothing else: no listing, nothing read back. The answer is what was stored
+      // (the client merges it into what it has; the next GET merges it with everything else).
+      await backend.put(`state/push/${stamp()}-${rand()}.json`, Buffer.from(JSON.stringify(core)), 'application/json');
+      send(res, 200, publicDoc(core));
       return;
     }
     if (req.method === 'DELETE') {
@@ -337,12 +344,22 @@ export function makeApi({ backend, familyCode, validIds, deadlineMs = 9000, log 
   async function recording(req, res, url) {
     const id = soundId(url);
     if (req.method === 'GET') {
-      for (let pass = 0; pass < 2; pass++) {
-        const list = versionsOf(await listing())[id];
-        const meta = list && list[list.length - 1];
-        if (!meta) break;
+      // The version named by GET /api/state is read directly (no listing). Without one, or if it was
+      // replaced meanwhile, the sound's versions are listed.
+      const v = url.searchParams.get('v');
+      const named = v ? parseRecordingPath(`recordings/${id}/${v}`) : null;
+      const candidates = named ? [async () => named] : [];
+      candidates.push(async () => {
+        let items = await backend.list(`recordings/${id}/`);
+        if (items.some((it) => LEGACY_REC_RE.test(it.pathname))) items = await listing(); // not migrated yet
+        const list = versionsOf(items)[id];
+        return list && list[list.length - 1];
+      });
+      for (const next of candidates) {
+        const meta = await next();
+        if (!meta) continue;
         const got = await backend.get(meta.path);
-        if (!got) continue; // replaced by a newer upload just now: list again
+        if (!got) continue;
         send(res, 200, got.body, {
           'content-type': meta.mime,
           'x-updated-at': String(meta.updatedAt),
@@ -364,15 +381,11 @@ export function makeApi({ backend, familyCode, validIds, deadlineMs = 9000, log 
       const trimmed = req.headers['x-trimmed'] === '1';
       const body = await readBody(req, MAX_RECORDING_BYTES);
       if (body.length < 44) throw new HttpError(400, 'empty');
-
-      const list = versionsOf(await listing())[id] || [];
-      const newest = list[list.length - 1];
-      if (newest && newest.updatedAt >= updatedAt) { send(res, 200, { stored: false, recording: publicDoc({ recordings: { [id]: newest } }).recordings[id] }); return; }
-
+      // One put. An older upload never replaces a newer one: the newest version wins when read,
+      // and the superseded ones are deleted by the next GET /api/state.
       const path = recordingPath(id, { updatedAt, durationMs, trimmed, ext: type.ext });
       await backend.put(path, body, type.mime);
       const meta = { updatedAt, mime: type.mime, durationMs, trimmed, size: body.length, path };
-      await pruneOlder(list, meta);
       send(res, 200, { stored: true, recording: publicDoc({ recordings: { [id]: meta } }).recordings[id] });
       return;
     }
@@ -390,7 +403,7 @@ export function makeApi({ backend, familyCode, validIds, deadlineMs = 9000, log 
 
   /** The merged doc as GET /api/state would give it, or null when the store is empty (tests). */
   async function readDoc() {
-    const items = await listing();
+    const items = await pruneAll(await listing());
     const st = await readState(items);
     const recordings = recordingsOf(items);
     if (!st.included.length && !Object.keys(recordings).length) return null;

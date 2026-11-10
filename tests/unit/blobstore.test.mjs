@@ -67,11 +67,13 @@ test('repeated uploads of one sound: newest wins and older versions are removed'
     assert.deepEqual(answers.map((r) => r.status), [200, 200, 200, 200]);
     const doc = await s.getState();
     assert.equal(doc.recordings.m.updatedAt, 3000);
-    // Racing uploads can leave a stale version until the next upload of that sound tidies it up.
+    assert.equal(paths(s.blobs, 'recordings/m/').length, 1, 'the next read tidies up superseded versions');
     assert.equal((await (await s.putRec('m', wav(0.6), 4000)).json()).stored, true);
+    assert.equal((await s.putRec('m', wav(0.2), 3500)).status, 200);
+    const after = await s.getState();
+    assert.equal(after.recordings.m.updatedAt, 4000, 'an older upload never replaces a newer one');
     assert.deepEqual(paths(s.blobs, 'recordings/m/').length, 1);
     assert.match(paths(s.blobs, 'recordings/m/')[0], /^recordings\/m\/4000-300-t-[0-9a-f]+\.wav$/);
-    assert.equal((await (await s.putRec('m', wav(0.2), 3500)).json()).stored, false, 'older refused');
   } finally { s.close(); }
 });
 
@@ -102,13 +104,19 @@ test('compaction keeps every round, and two compactions at once are safe', async
   } finally { s.close(); }
 });
 
-test('a push that adds nothing stores nothing', async () => {
+test('writes cost one put each; only GET /api/state lists', async () => {
   const s = await server();
   try {
+    const before = { ...s.backend.stats };
     await s.putState({ progress: { s1: { m: [round('a', 1)] } } });
-    const before = paths(s.blobs, 'state/');
-    await s.putState({ progress: { s1: { m: [round('a', 1)] } } });
-    assert.deepEqual(paths(s.blobs, 'state/'), before);
+    await s.putRec('m', wav(0.2), 10);
+    assert.equal(s.backend.stats.put - before.put, 2);
+    assert.equal(s.backend.stats.list - before.list, 0);
+    const doc = await s.getState();
+    assert.equal(s.backend.stats.list - before.list, 1);
+    const got = await s.call(`recording?id=m&v=${doc.recordings.m.version}`);
+    assert.equal(got.status, 200);
+    assert.equal(s.backend.stats.list - before.list, 1, 'a named version is read without listing');
   } finally { s.close(); }
 });
 
@@ -143,7 +151,7 @@ test('legacy family.json and old-path recordings are migrated, then the original
     assert.deepEqual(Buffer.from(await rec.arrayBuffer()), bytes.s);
     for (const d of [doc, doc2]) {
       assert.deepEqual(Object.keys(d.recordings).sort(), ['m', 'n', 's']);
-      assert.deepEqual(d.recordings.m, { updatedAt: 1794337720014, mime: 'audio/wav', durationMs: 850, trimmed: true, size: bytes.m.length });
+      assert.deepEqual(d.recordings.m, { updatedAt: 1794337720014, mime: 'audio/wav', durationMs: 850, trimmed: true, size: bytes.m.length, version: '1794337720014-850-t-2f819f2d8d76.wav' });
       assert.equal(d.recordings.s.durationMs, 3160);
       assert.equal(d.recordings.n.updatedAt, 1794337763934);
       assert.equal(d.recordings.n.durationMs, 500, 'duration read from the WAV header');
@@ -162,9 +170,9 @@ test('legacy family.json and old-path recordings are migrated, then the original
       const got = await s.call(`recording?id=${id}`);
       assert.deepEqual(Buffer.from(await got.arrayBuffer()), bytes[id]);
     }
-    // A device that still has the old version does not re-upload it; a newer one replaces it.
-    assert.equal((await (await s.putRec('m', bytes.m, 1794337720014)).json()).stored, false);
+    // A newer recording from a device replaces the migrated one.
     assert.equal((await (await s.putRec('m', wav(0.3), 1794337799999)).json()).stored, true);
+    assert.equal((await s.getState()).recordings.m.updatedAt, 1794337799999);
     assert.equal(paths(s.blobs, 'recordings/m/').length, 1);
     assert.match(paths(s.blobs, 'recordings/m/')[0], /^recordings\/m\/1794337799999-300-t-[0-9a-f]+\.wav$/);
   } finally { s.close(); }

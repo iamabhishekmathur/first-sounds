@@ -39,8 +39,14 @@ export function docFromApp(app) {
   };
 }
 
-export function createSync(app, { base = 'api/', retryMs = 5000, debounceMs = 2500 } = {}) {
+// A progress or settings push reuses the server doc fetched this recently instead of fetching it
+// again: the Blob store's monthly operation allowance counts every listing (see api/_lib/core.js).
+const FRESH_MS = 60 * 1000;
+
+export function createSync(app, { base = 'api/', retryMs = 5000, debounceMs = 2500, freshMs = FRESH_MS } = {}) {
   let code = null;
+  let known = null; // the last server doc and when it was fetched: { doc, at }
+  let full = true; // the next cycle fetches the server doc whatever its age
   let status = 'off';
   let lastSynced = 0;
   let running = null;
@@ -107,7 +113,8 @@ export function createSync(app, { base = 'api/', retryMs = 5000, debounceMs = 25
   }
 
   async function download(id, meta) {
-    const res = await api('GET', `recording?id=${encodeURIComponent(id)}`, { raw: true });
+    const v = meta.version ? `&v=${encodeURIComponent(meta.version)}` : '';
+    const res = await api('GET', `recording?id=${encodeURIComponent(id)}${v}`, { raw: true });
     const data = await res.arrayBuffer();
     const rec = {
       id, data,
@@ -136,8 +143,17 @@ export function createSync(app, { base = 'api/', retryMs = 5000, debounceMs = 25
 
   async function cycle() {
     setStatus('syncing');
-    let server = await api('GET', 'state');
-    let changed = await applyDoc(server);
+    const fetchNow = full || !known || Date.now() - known.at > freshMs;
+    full = false;
+    let server;
+    let changed = false;
+    if (fetchNow) {
+      server = await api('GET', 'state');
+      known = { doc: server, at: Date.now() };
+      changed = await applyDoc(server);
+    } else {
+      server = known.doc;
+    }
     const remote = { ...(server.recordings || {}) };
     const ids = [...new Set([...app.recordings.keys(), ...Object.keys(remote)])];
     // Every recording that is newer here than on the server is the upload queue. One that fails
@@ -161,8 +177,12 @@ export function createSync(app, { base = 'api/', retryMs = 5000, debounceMs = 25
     }
     const want = coreOf(docFromApp(app));
     if (canon(want) !== canon(coreOf(server))) {
-      server = await api('PUT', 'state', { body: JSON.stringify(want), headers: { 'content-type': 'application/json' } });
-      if (await applyDoc(server)) changed = true;
+      const stored = await api('PUT', 'state', { body: JSON.stringify(want), headers: { 'content-type': 'application/json' } });
+      if (await applyDoc(stored)) changed = true;
+      // The server now has at least what was sent, merged with what it had.
+      known = { doc: { ...mergeDocs(server, stored), recordings: remote }, at: known ? known.at : Date.now() };
+    } else if (known) {
+      known = { ...known, doc: { ...known.doc, recordings: remote } };
     }
     if (failed) throw failed;
     return changed;
@@ -174,8 +194,12 @@ export function createSync(app, { base = 'api/', retryMs = 5000, debounceMs = 25
     retryDelay = Math.min(retryDelay * 2, 5 * 60 * 1000);
   }
 
-  /** Runs one sync cycle (or queues another one if a cycle is already running). */
-  function run() {
+  /**
+   * Runs one sync cycle (or queues another one if a cycle is already running). fetch: false lets a
+   * progress push reuse a recently fetched server doc; everything else fetches it.
+   */
+  function run(fetch = true) {
+    if (fetch !== false) full = true;
     if (!code) return Promise.resolve(status);
     clearTimeout(timer);
     timer = null;
@@ -192,6 +216,7 @@ export function createSync(app, { base = 'api/', retryMs = 5000, debounceMs = 25
           if (changed) app.onSynced?.();
         } while (again && code);
       } catch (e) {
+        full = true; // after a failure, start from the server's doc again
         if (e.status === 401) { setStatus('wrong-code'); }
         else {
           setStatus(e.network || (typeof navigator !== 'undefined' && navigator.onLine === false) ? 'offline' : 'error');
@@ -261,10 +286,11 @@ export function createSync(app, { base = 'api/', retryMs = 5000, debounceMs = 25
       if (kind === 'recording' || kind === 'reset' || kind === 'import') { run(); return; }
       if (running) { again = true; return; }
       clearTimeout(timer);
-      timer = setTimeout(run, kind === 'settings' ? Math.min(debounceMs, 1000) : debounceMs);
+      timer = null;
+      timer = setTimeout(() => run(false), kind === 'settings' ? Math.min(debounceMs, 1000) : debounceMs);
     },
 
-    now: run,
+    now: () => run(),
 
     start() {
       if (typeof document !== 'undefined') {

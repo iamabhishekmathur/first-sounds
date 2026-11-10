@@ -51,8 +51,8 @@ dashes.
 | Route | Purpose |
 | --- | --- |
 | `GET /api/state` | The family's doc: settings, progress, readiness, recording metadata |
-| `PUT /api/state` | Merge a device's state (checked and limited to known sound ids, 512 KB max) |
-| `GET/PUT/DELETE /api/recording?id=<sound id>` | One recording (audio only, 2 MB max; an older upload never replaces a newer one) |
+| `PUT /api/state` | Store a device's state, merged into the doc (checked and limited to known sound ids, 512 KB max). Answers with what it stored |
+| `GET/PUT/DELETE /api/recording?id=<sound id>[&v=<version>]` | One recording (audio only, 2 MB max; an older upload never replaces a newer one). `v` is the `version` that `GET /api/state` gives |
 | `DELETE /api/state` with `x-confirm: erase-everything` | Delete all recordings and state (not used by the app) |
 
 Storage: a **private** Vercel Blob store (`first-sounds-blob`). Blobs can only be read with the
@@ -61,12 +61,17 @@ layout is append-only: no request overwrites or conditionally writes a blob, so 
 cannot conflict and nothing is ever read stale.
 
 - `recordings/<sound>/<updatedAt>-<durationMs>-<t|u>-<rand>.<ext>`: one blob per uploaded version.
-  The newest wins, and older versions of that sound are deleted after a newer upload.
+  The newest wins, and superseded versions are deleted by the next `GET /api/state`.
 - `state/push/<time>-<rand>.json`: one blob per `PUT /api/state`. `state/snap/<time>-<rand>.json`:
   a compaction. The state is the merge of all of them (the same merge rules as the app). Above 20
   blobs, a request writes a snapshot of everything it read, then deletes exactly those blobs.
 - The earlier layout (`state/family.json` and `recordings/<sound>/<updatedAt>-<hex>`) is migrated by
   the first request that sees it: copied into the new layout, then the copied originals deleted.
+
+Operations are kept few because the Hobby plan includes 2,000 Blob "advanced" operations (puts and
+lists) a month, and the store stops working for the rest of the period beyond that: each PUT is one
+put, only `GET /api/state` lists, recordings are read by name (cached reads are free), deletes are
+free. The app fetches the state at most once a minute while pushing progress during play.
 
 Every Blob call has a 6 s timeout and at most one retry, and a request answers 503 after 9 s, so a
 slow store makes devices retry instead of waiting.
