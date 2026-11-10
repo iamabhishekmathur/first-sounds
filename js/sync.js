@@ -1,0 +1,261 @@
+// Optional sync with the family's server storage (see api/ and README). IndexedDB stays the local
+// cache: the app never waits for the network, and every change is saved locally first. Once a
+// device has the family code, each sync cycle pulls the server doc, merges it into local state
+// (js/syncdoc.js rules), downloads newer recordings, uploads newer local ones and pushes the merged
+// state back. Failures are retried with a backoff; the status is shown in the parent area only.
+//
+// Test hooks: ?syncRetry=<ms> (first retry delay), ?syncDebounce=<ms> (progress push delay).
+
+import { mergeDocs, coreOf, canon, normaliseCode } from './syncdoc.js';
+
+export const SYNC_KEY = 'sync'; // IndexedDB kv key for { code }; never included in backups
+
+export const STATUS_TEXT = {
+  off: 'Not syncing',
+  syncing: 'Syncing…',
+  synced: 'Synced',
+  offline: 'Offline: changes are kept on this device and will sync later',
+  'wrong-code': 'The family code was not accepted',
+  error: 'The server could not be reached: will try again',
+};
+
+class ApiError extends Error {
+  constructor(status, network = false) { super(network ? 'network' : `http ${status}`); this.status = status; this.network = network; }
+}
+
+/** The app's local state as a sync doc. */
+export function docFromApp(app) {
+  const recordings = {};
+  for (const [id, r] of app.recordings) {
+    recordings[id] = { updatedAt: r.updatedAt || 0, mime: r.mime, durationMs: r.durationMs, trimmed: !!r.trimmed };
+  }
+  return {
+    settings: { speakWords: app.settings.speakWords, roundsPerSession: app.settings.roundsPerSession },
+    settingsAt: app.meta.settingsAt || 0,
+    progress: { s1: app.progress.s1 || {}, s2: app.progress.s2 || {} },
+    resetAt: app.meta.resetAt || 0,
+    readiness: app.readiness,
+    recordings,
+  };
+}
+
+export function createSync(app, { base = 'api/', retryMs = 5000, debounceMs = 2500 } = {}) {
+  let code = null;
+  let status = 'off';
+  let lastSynced = 0;
+  let running = null;
+  let again = false;
+  let timer = null;
+  let retryTimer = null;
+  let retryDelay = retryMs;
+  const listeners = new Set();
+  const log = (type, extra = {}) => { (globalThis.__fsLog || []).push({ type, ...extra }); };
+
+  function setStatus(s) {
+    if (status === s) return;
+    status = s;
+    log('sync-status', { status: s });
+    for (const fn of listeners) { try { fn(s); } catch { /* ignore */ } }
+  }
+
+  async function api(method, path, { body, headers = {}, raw = false, withCode = code } = {}) {
+    let res;
+    try {
+      res = await fetch(`${base}${path}`, { method, body, headers: { 'x-family-code': withCode, ...headers }, cache: 'no-store' });
+    } catch {
+      throw new ApiError(0, true);
+    }
+    if (!res.ok) throw new ApiError(res.status);
+    return raw ? res : res.json();
+  }
+
+  /** Merge a server doc into the app's state and the local cache. Synchronous up to the writes. */
+  async function applyDoc(server) {
+    const local = docFromApp(app);
+    const merged = mergeDocs(local, server);
+    const writes = [];
+    if (canon(merged.progress) !== canon(local.progress)) {
+      app.progress = merged.progress;
+      writes.push(app.store.setKV('progress', app.progress));
+    }
+    if (canon(merged.readiness) !== canon(local.readiness)) {
+      app.readiness = merged.readiness;
+      writes.push(app.store.setKV('readiness', app.readiness));
+    }
+    if (merged.settings && (canon(merged.settings) !== canon(local.settings) || merged.settingsAt !== local.settingsAt)) {
+      app.settings = { ...app.settings, ...merged.settings };
+      app.meta.settingsAt = merged.settingsAt;
+      writes.push(app.store.setKV('settings', app.settings));
+    }
+    if (merged.resetAt !== local.resetAt || merged.settingsAt !== local.settingsAt) {
+      app.meta.resetAt = merged.resetAt;
+      app.meta.settingsAt = merged.settingsAt;
+      writes.push(app.store.setKV('meta', app.meta));
+    }
+    await Promise.all(writes.map((p) => p.catch((e) => { app.saveError = e.message || String(e); })));
+    return writes.length > 0;
+  }
+
+  async function download(id, meta) {
+    const res = await api('GET', `recording?id=${encodeURIComponent(id)}`, { raw: true });
+    const data = await res.arrayBuffer();
+    const rec = {
+      id, data,
+      mime: (res.headers.get('content-type') || meta.mime || 'audio/wav').split(';')[0],
+      durationMs: Number(res.headers.get('x-duration-ms')) || meta.durationMs || 0,
+      trimmed: res.headers.get('x-trimmed') === '1',
+      updatedAt: Number(res.headers.get('x-updated-at')) || meta.updatedAt,
+    };
+    const cur = app.recordings.get(id);
+    if (cur && (cur.updatedAt || 0) >= rec.updatedAt) return false; // re-recorded here meanwhile
+    try { await app.store.putRecording(rec); } catch (e) { app.saveError = e.message || String(e); }
+    app.recordings.set(id, rec);
+    app.onRecordingReplaced?.(id);
+    log('sync-download', { id });
+    return true;
+  }
+
+  async function upload(rec) {
+    const out = await api('PUT', `recording?id=${encodeURIComponent(rec.id)}`, {
+      body: rec.data,
+      headers: { 'content-type': rec.mime || 'audio/wav', 'x-updated-at': String(rec.updatedAt || Date.now()), 'x-duration-ms': String(Math.round(rec.durationMs || 0)), 'x-trimmed': rec.trimmed ? '1' : '0' },
+    });
+    log('sync-upload', { id: rec.id, stored: out.stored });
+    return out.recording;
+  }
+
+  async function cycle() {
+    setStatus('syncing');
+    let server = await api('GET', 'state');
+    let changed = await applyDoc(server);
+    const remote = { ...(server.recordings || {}) };
+    const ids = [...new Set([...app.recordings.keys(), ...Object.keys(remote)])];
+    for (const id of ids) {
+      const l = app.recordings.get(id);
+      const s = remote[id];
+      if (s && (!l || s.updatedAt > (l.updatedAt || 0))) {
+        if (await download(id, s)) changed = true;
+      } else if (l && l.data && (!s || (l.updatedAt || 0) > s.updatedAt)) {
+        const meta = await upload(l);
+        if (meta) remote[id] = meta;
+      }
+    }
+    const want = coreOf(docFromApp(app));
+    if (canon(want) !== canon(coreOf(server))) {
+      server = await api('PUT', 'state', { body: JSON.stringify(want), headers: { 'content-type': 'application/json' } });
+      if (await applyDoc(server)) changed = true;
+    }
+    return changed;
+  }
+
+  function scheduleRetry() {
+    clearTimeout(retryTimer);
+    retryTimer = setTimeout(() => { retryTimer = null; run(); }, retryDelay);
+    retryDelay = Math.min(retryDelay * 2, 5 * 60 * 1000);
+  }
+
+  /** Runs one sync cycle (or queues another one if a cycle is already running). */
+  function run() {
+    if (!code) return Promise.resolve(status);
+    clearTimeout(timer);
+    timer = null;
+    if (running) { again = true; return running; }
+    running = (async () => {
+      try {
+        do {
+          again = false;
+          const changed = await cycle();
+          lastSynced = Date.now();
+          retryDelay = retryMs;
+          clearTimeout(retryTimer);
+          setStatus('synced');
+          if (changed) app.onSynced?.();
+        } while (again && code);
+      } catch (e) {
+        if (e.status === 401) { setStatus('wrong-code'); }
+        else {
+          setStatus(e.network || (typeof navigator !== 'undefined' && navigator.onLine === false) ? 'offline' : 'error');
+          scheduleRetry();
+        }
+        log('sync-error', { status: e.status || 0 });
+      } finally {
+        running = null;
+      }
+      return status;
+    })();
+    return running;
+  }
+
+  const sync = {
+    get status() { return status; },
+    get lastSynced() { return lastSynced; },
+    get enabled() { return !!code; },
+    onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
+
+    async load() {
+      try {
+        const cfg = await app.store.getKV(SYNC_KEY);
+        if (cfg && typeof cfg.code === 'string' && cfg.code) code = cfg.code;
+      } catch { /* no saved code */ }
+      if (code) setStatus('synced');
+    },
+
+    /**
+     * Checks a code with the server and, if accepted, saves it and syncs.
+     * Returns 'ok', 'wrong-code', 'empty' or 'offline' (offline: saved, will sync later).
+     */
+    async enter(input) {
+      const c = normaliseCode(input);
+      if (!c) return 'empty';
+      try {
+        await api('GET', 'state', { withCode: c });
+      } catch (e) {
+        if (e.status === 401) return 'wrong-code';
+        await this.save(c);
+        setStatus('offline');
+        scheduleRetry();
+        return 'offline';
+      }
+      await this.save(c);
+      await run();
+      return status === 'synced' ? 'ok' : status;
+    },
+
+    async save(c) {
+      code = c;
+      retryDelay = retryMs;
+      try { await app.store.setKV(SYNC_KEY, { code: c }); } catch { /* kept for this session */ }
+    },
+
+    async forget() {
+      code = null;
+      clearTimeout(timer);
+      clearTimeout(retryTimer);
+      try { await app.store.setKV(SYNC_KEY, null); } catch { /* ignore */ }
+      setStatus('off');
+    },
+
+    /** Something changed locally. Recordings and resets push at once; progress and settings debounce. */
+    changed(kind) {
+      if (!code) return;
+      if (kind === 'recording' || kind === 'reset' || kind === 'import') { run(); return; }
+      if (running) { again = true; return; }
+      clearTimeout(timer);
+      timer = setTimeout(run, kind === 'settings' ? Math.min(debounceMs, 1000) : debounceMs);
+    },
+
+    now: run,
+
+    start() {
+      if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') run(); });
+      }
+      if (typeof window !== 'undefined') {
+        window.addEventListener('online', () => { retryDelay = retryMs; run(); });
+        window.addEventListener('pageshow', (e) => { if (e.persisted) run(); });
+      }
+      return run();
+    },
+  };
+  return sync;
+}

@@ -83,12 +83,15 @@ export function statusOf(progress, stage, id) {
   return soundStatus(historyOf(progress, stage, id));
 }
 
-/** Returns a new progress object with one round appended (immutably). */
-export function recordRound(progress, stage, id, correct, day) {
+/**
+ * Returns a new progress object with one round appended (immutably).
+ * extra: more fields for the round, such as { id, t } (a unique round id and time, used by sync).
+ */
+export function recordRound(progress, stage, id, correct, day, extra = null) {
   const key = `s${stage}`;
   const base = progress || {};
   const prevStage = base[key] || {};
-  const hist = [...(prevStage[id] || []), { c: correct ? 1 : 0, d: day }].slice(-HISTORY_KEEP);
+  const hist = [...(prevStage[id] || []), { c: correct ? 1 : 0, d: day, ...(extra || {}) }].slice(-HISTORY_KEEP);
   return { ...base, [key]: { ...prevStage, [id]: hist } };
 }
 

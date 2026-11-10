@@ -4,6 +4,7 @@
 import { h, mount, setMode, holdGate, icon } from './ui.js';
 import { planRound, recordRound, readinessEligible, planReadiness, canPlay } from './logic.js';
 import * as audio from './audio.js';
+import { newId } from './syncdoc.js';
 
 const RESOLVE_DELAY = 2200;
 
@@ -101,7 +102,7 @@ function renderRound(app, s, round) {
     if (resolved) { if (ch.kind === 'word') speak(ch.word); return; }
     if (ch.correct) {
       resolved = true;
-      app.progress = recordRound(app.progress, round.stage, round.target.id, wrongs === 0, app.today());
+      app.progress = recordRound(app.progress, round.stage, round.target.id, wrongs === 0, app.today(), { id: newId(), t: Date.now() });
       app.save('progress');
       s.done += 1;
       el.classList.remove('glow');
@@ -200,7 +201,7 @@ function readiness(app, s) {
           if (answered || !alive(app, s)) return;
           answered = true;
           app.readiness = [...app.readiness, {
-            d: app.today(), pair: `${a.name}+${b.name}`, asked: word(plan.ask), chose: word(order), correct: order === plan.ask, at: Date.now(),
+            id: newId(), d: app.today(), pair: `${a.name}+${b.name}`, asked: word(plan.ask), chose: word(order), correct: order === plan.ask, at: Date.now(),
           }];
           app.save('readiness');
           row.classList.add('happy'); // whatever the child picks, the response is the same gentle one

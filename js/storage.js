@@ -1,9 +1,11 @@
-// All persistent state lives in IndexedDB: store "recordings" (one record per sound id, audio bytes +
-// mime) and store "kv" (settings, progress, readiness). If IndexedDB is missing or fails to open, an
+// All local state lives in IndexedDB: store "recordings" (one record per sound id, audio bytes +
+// mime) and store "kv" (settings, progress, readiness, meta = sync timestamps, sync = the family
+// code). With a family code the server is the source of truth and this is the local cache (js/sync.js). If IndexedDB is missing or fails to open, an
 // in-memory backend is used so the app still runs (nothing persists; the parent is told).
 
 const DB_VERSION = 1;
-export const KV_KEYS = ['settings', 'progress', 'readiness'];
+export const KV_KEYS = ['settings', 'progress', 'readiness', 'meta'];
+const DEVICE_KEYS = ['sync']; // kept on this device: not exported, and kept when a backup is imported
 
 function req2promise(req) {
   return new Promise((resolve, reject) => {
@@ -126,8 +128,11 @@ function makeStore(b, problem) {
     async importBackup(obj) {
       const problemText = checkBackup(obj);
       if (problemText) throw new Error(problemText);
+      const keep = {};
+      for (const k of DEVICE_KEYS) keep[k] = await b.get('kv', k);
       await b.clear('recordings');
       await b.clear('kv');
+      for (const k of DEVICE_KEYS) if (keep[k] != null) await b.put('kv', keep[k], k);
       for (const k of KV_KEYS) if (obj.kv[k] != null) await b.put('kv', obj.kv[k], k);
       for (const r of obj.recordings) await b.put('recordings', { ...r, data: base64ToBuf(r.data) });
     },

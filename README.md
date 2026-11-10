@@ -3,8 +3,9 @@
 A tablet web app for a parent and a 3-year-old to learn the sounds of English before reading.
 The parent records every sound in their own voice; the games play those recordings.
 
-Plain static site: HTML, CSS and ES modules. No framework, build step, dependencies, network
-requests or service worker. All paths are relative, so it works from any sub-path.
+Plain static site: HTML, CSS and ES modules, with no framework, build step or service worker. All
+paths are relative, so it works from any sub-path. Optional sync (below) adds two small Vercel
+functions under `api/` that store recordings and progress in a private Vercel Blob store.
 
 ## Run locally
 
@@ -16,24 +17,90 @@ Any static server works. Recording needs a secure origin (https:// or localhost)
 To use it on an iPad, host the folder on an HTTPS origin, open it in Safari and use
 Share > Add to Home Screen.
 
+## Sync with a family code
+
+Each device keeps everything in IndexedDB, so the app loads instantly and works offline. Once the
+parent enters the family code (parent area, or the welcome screen of a new device: "Sync with your
+family code"), the server becomes the source of truth and IndexedDB is the local cache.
+
+- **When:** on start, on return to the foreground, when the browser comes back online, and after
+  every change. A new recording is uploaded as soon as it is saved, and progress pushes are
+  debounced by 2.5 s. On failure it retries with a backoff (5 s doubling to 5 minutes).
+- **Merge rules** (`js/syncdoc.js`, used by both the app and the server): every round has a stable
+  id (old rounds get a deterministic one), and progress is the union of rounds by id, oldest first,
+  with the usual last 12 per sound kept. Readiness results are a union by id. Settings and each
+  recording are last-writer-wins by timestamp. "Reset progress" is a timestamp: every device drops
+  only the rounds played before it. The first device to enter the code uploads everything, and
+  later devices merge in the same way, so nothing is lost.
+- **Status** shows at the top of the parent pages only (synced / syncing / offline / server problem
+  / code not accepted). The child screens never show sync state or wait for the network.
+- **Backups** still work. The code is never in a backup. Importing a backup on a syncing device
+  replaces local data, then merges it with the server, which never removes anything there.
+- Deleting a recording through the API does not reach devices that still have it: they upload it
+  again on their next sync. The app itself has no delete button.
+
+### Server
+
+`api/state.js` and `api/recording.js` (Node runtime, `@vercel/blob`). The request handling is in
+`api/_lib/core.js`. Every request needs the header `x-family-code`; without it, or with a wrong
+code, the answer is an empty 401. The code is compared in constant time, ignoring case, spaces and
+dashes.
+
+| Route | Purpose |
+| --- | --- |
+| `GET /api/state` | The family's doc: settings, progress, readiness, recording metadata |
+| `PUT /api/state` | Merge a device's state (checked and limited to known sound ids, 512 KB max) |
+| `GET/PUT/DELETE /api/recording?id=<sound id>` | One recording (audio only, 2 MB max; an older upload never replaces a newer one) |
+| `DELETE /api/state` with `x-confirm: erase-everything` | Delete all recordings and state (not used by the app) |
+
+Storage: a **private** Vercel Blob store (`first-sounds-blob`). It holds `state/family.json` and
+`recordings/<sound>/<version>`. Blobs can only be read with the store token, so audio reaches the
+app only through `/api/recording` after the code check. State writes use etag checks and retry, so
+two devices saving at the same moment cannot overwrite each other.
+
+Project environment variables (no values here):
+
+- `BLOB_READ_WRITE_TOKEN`: set by Vercel when the Blob store is connected to the project.
+- `FAMILY_CODE`: the family code (sensitive type; production and preview). To change it, replace
+  the variable and redeploy. Every device then shows "code not accepted" until the new code is
+  entered.
+
+### Deploy
+
+The project is `first-sounds` on Vercel, with framework "Other" and no build command. Vercel
+installs `package.json` dependencies and turns `api/*.js` into functions (`vercel.json` sets their
+duration and includes `data/sounds.json`). Upload `index.html`, `manifest.webmanifest`, `icons/`,
+`css/`, `js/`, `data/`, `api/`, `package.json`, `package-lock.json` and `vercel.json` (not `tests/`
+or `screenshots/`) as a production deployment, either with `vercel deploy --prod` or with
+`POST https://api.vercel.com/v13/deployments` (files inline, `target: "production"`).
+
+Locally, `node tests/server.mjs` also serves a fake of the API (an in-memory store, using the same
+`api/_lib/core.js`). It accepts the code in `$FAMILY_CODE`, or `local-test-code-11` by default.
+
 ## Tests
 
 ```sh
 /opt/node22/bin/node --test "tests/**/*.test.mjs"
 ```
 
-- `tests/unit/`: the schema validator, the mastery and scheduling rules (`js/logic.js`) and the
-  pure audio helpers (silence trimming, WAV encoding, mime type detection).
+- `tests/unit/`: the schema validator, the mastery and scheduling rules (`js/logic.js`), the
+  pure audio helpers (silence trimming, WAV encoding, mime type detection), the sync merge rules
+  (`syncdoc.test.mjs`) and the API handling (`api.test.mjs`: code check, size and id limits,
+  concurrent writes, last-writer-wins recordings).
 - `tests/browser/`: Playwright (Chromium, fake microphone, iPad-landscape touch viewport) against
   `tests/server.mjs`. Covers first run, recording and persistence, the parent gate, microphone
   denied or unavailable, storage unavailable, a full session, stage 2 unlocking, the readiness
   check, settings, reset, and export/import.
 - `tests/browser/realdata.test.mjs` checks the real `data/sounds.json`. It is skipped if the file
   is missing.
+- `tests/browser/sync.test.mjs`: entering the code, first upload, a fresh profile pulling the same
+  recordings and progress, a recording uploaded straight away, a wrong code, offline then
+  reconnecting, the server down, two devices playing offline at once, a reset, and backups.
 - `tests/browser/screenshots.test.mjs` writes every screen to `screenshots/`.
 
 Test hooks are URL parameters: `?data=<path>` (data file), `?today=YYYY-MM-DD` (date used for
-mastery and readiness), `?seed=<n>` (repeatable randomness), `?db=<name>` (IndexedDB name).
+mastery and readiness), `?seed=<n>` (repeatable randomness), `?db=<name>` (IndexedDB name),
+`?syncRetry=<ms>` and `?syncDebounce=<ms>` (sync timing).
 
 ## Code layout
 
@@ -41,6 +108,8 @@ mastery and readiness), `?seed=<n>` (repeatable randomness), `?db=<name>` (Index
 | --- | --- |
 | `js/data.js` | Loads `data/sounds.json` and validates the schema |
 | `js/storage.js` | IndexedDB (recordings + key/value state), in-memory fallback, backup export/import |
+| `js/sync.js`, `js/syncdoc.js` | Sync with the server; the sync document and its merge rules |
+| `api/` | Vercel functions for sync (`_lib/` holds shared code, not routes) |
 | `js/audio.js` | Recording (MediaRecorder), silence trimming, playback (Web Audio), tones, word speech |
 | `js/logic.js` | Pure mastery, unlocking, target choice and distractor rules (no DOM) |
 | `js/game.js` | Child screens: home, Hear it, See it, readiness, all done |
@@ -83,5 +152,8 @@ not start. Warnings are listed under the parent menu.
 - Word speech uses the device voice, so it depends on which voices are installed.
 - The speaker badge on each picture is 64 px, smaller than the 120 px child targets, because it is
   a secondary control inside the 150 px or larger picture card.
-- Storage is per browser. Safari may clear site data that has not been used for a while unless the
-  app is added to the Home Screen. Use the backup export.
+- Without a family code, storage is per browser. Safari may clear site data that has not been used
+  for a while unless the app is added to the Home Screen. Use sync or the backup export. On iPad,
+  Safari and the Home Screen app have separate storage, so enter the code in the one you use.
+- Sync has no rate limit on wrong codes. The code is three words from a list of about 170 plus two
+  digits, which is hard to guess online but is not a password.

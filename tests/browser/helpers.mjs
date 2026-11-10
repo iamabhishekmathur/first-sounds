@@ -8,13 +8,17 @@ const { chromium } = require('playwright');
 export const FIXTURE = 'tests/fixtures/sounds.sample.json';
 export const IPAD_LANDSCAPE = { width: 1180, height: 820 };
 
+export const FAMILY_CODE = 'panda-kettle-moon-38';
+
+/** Static server + fake sync API (family code FAMILY_CODE, sound ids from the fixture). */
 export async function setup() {
-  const { server, port } = await startServer(0);
+  const { server, port, api } = await startServer(0, { familyCode: FAMILY_CODE, dataFile: FIXTURE });
   const browser = await chromium.launch({
     args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', '--autoplay-policy=user-gesture-required'],
   });
   return {
     browser,
+    api,
     base: `http://127.0.0.1:${port}/`,
     async close() { await browser.close(); server.close(); },
   };

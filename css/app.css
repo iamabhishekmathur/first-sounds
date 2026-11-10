@@ -334,3 +334,9 @@ button:focus-visible { outline: 4px solid var(--accent); outline-offset: 4px; }
   .choice.glow { box-shadow: 0 0 0 14px rgba(255, 197, 61, 0.55), 0 10px 0 var(--line); }
   .gate.holding .gate-ring circle { animation-duration: var(--hold, 2000ms) !important; }
 }
+
+/* ---------- sync (parent area only) ---------- */
+.p-sync { font-size: 14px; color: var(--muted); padding: 4px 10px; border-radius: 999px; background: var(--accent-soft); }
+.p-sync[data-status="synced"] { background: var(--good-soft); color: #1c4d30; }
+.p-sync[data-status="offline"], .p-sync[data-status="error"], .p-sync[data-status="wrong-code"] { background: var(--warn-soft); color: #5c3b00; }
+.p-input { min-height: 48px; min-width: 0; flex: 1 1 260px; max-width: 420px; padding: 8px 14px; border: 2px solid var(--line); border-radius: 14px; font: inherit; font-size: 18px; background: #fff; }

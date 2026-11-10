@@ -7,14 +7,88 @@ import {
 } from './logic.js';
 import * as audio from './audio.js';
 import { checkBackup } from './storage.js';
+import { STATUS_TEXT } from './sync.js';
 
 const STATUS_LABEL = { not_started: 'not started', learning: 'learning', solid: 'solid' };
+
+/* ---------- sync status (parent screens only) ---------- */
+
+function statusText(app) {
+  const st = app.sync ? app.sync.status : 'off';
+  if (st === 'synced' && app.sync.lastSynced) {
+    const t = new Date(app.sync.lastSynced);
+    return `${STATUS_TEXT.synced} at ${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+  }
+  return STATUS_TEXT[st] || st;
+}
+
+let statusListening = false;
+function syncStatusEl(app) {
+  if (!app.sync || !app.sync.enabled) return null;
+  if (!statusListening) {
+    statusListening = true;
+    app.sync.onChange(() => {
+      for (const el of document.querySelectorAll('[data-testid="sync-status"]')) {
+        el.dataset.status = app.sync.status;
+        el.textContent = statusText(app);
+      }
+      for (const el of document.querySelectorAll('[data-sync-card]')) el.replaceWith(syncCard(app, el.dataset.syncCard));
+    });
+  }
+  return h('span', { class: 'p-sync', 'data-testid': 'sync-status', 'data-status': app.sync.status, role: 'status' }, statusText(app));
+}
+
+/** "Sync with your family code": enter the code, or see the status and sync now / stop. */
+function syncCard(app, where) {
+  const sync = app.sync;
+  if (!sync) return null;
+  const msg = h('p', { class: 'p-sub', 'data-testid': 'sync-msg' });
+  let card;
+  if (!sync.enabled || sync.status === 'wrong-code') {
+    const input = h('input', {
+      type: 'text', class: 'p-input', 'data-testid': 'sync-code', autocomplete: 'off', autocapitalize: 'none',
+      autocorrect: 'off', spellcheck: 'false', enterkeyhint: 'go', placeholder: 'for example: apple-river-moon-42', 'aria-label': 'Family code',
+    });
+    const btn = h('button', { class: 'p-btn primary', type: 'button', 'data-testid': 'sync-enter' }, 'Sync');
+    const go = async () => {
+      btn.disabled = true;
+      msg.textContent = 'Checking the code…';
+      const r = await sync.enter(input.value);
+      btn.disabled = false;
+      if (r === 'empty') { msg.textContent = 'Type your family code first.'; return; }
+      if (r === 'wrong-code') { msg.textContent = 'That code was not accepted. Check it and try again.'; input.select(); return; }
+      if (where === 'welcome' && app.recordings.size > 0) { app.go('parentMenu'); return; }
+      app.go(where === 'welcome' ? 'welcome' : 'parentMenu');
+    };
+    btn.addEventListener('click', go);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+    card = h('div', { class: 'p-card', 'data-sync-card': where, 'data-testid': 'sync-card' },
+      h('h2', {}, 'Sync with your family code'),
+      sync.status === 'wrong-code' ? notice('warn', 'The family code saved on this device was not accepted. Enter it again.') : null,
+      h('p', {}, 'Saves recordings, progress and settings on your family\'s server, so they follow you to your other devices. Enter the code once on each device.'),
+      h('div', { class: 'p-actions' }, input, btn),
+      msg);
+  } else {
+    card = h('div', { class: 'p-card', 'data-sync-card': where, 'data-testid': 'sync-card' },
+      h('h2', {}, 'Sync'),
+      h('p', {}, 'This device syncs recordings, progress and settings with your family code. The status is shown at the top of each parent page.'),
+      h('div', { class: 'p-actions' },
+        h('button', { class: 'p-btn', type: 'button', 'data-testid': 'sync-now', onclick: () => sync.now() }, 'Sync now'),
+        h('button', {
+          class: 'p-btn', type: 'button', 'data-testid': 'sync-forget',
+          onclick: async () => { await sync.forget(); app.go(where === 'welcome' ? 'welcome' : 'parentMenu'); },
+        }, 'Stop syncing on this device')),
+      h('p', { class: 'p-muted' }, 'Stopping keeps everything on this device and on the server.'));
+  }
+  return card;
+}
 
 function page(screenName, title, { back } = {}, ...kids) {
   setMode('parent');
   const header = h('header', { class: 'p-header' },
     back ? h('button', { class: 'p-back', type: 'button', onclick: back.go }, `‹ ${back.label}`) : null,
-    h('h1', {}, title));
+    h('h1', {}, title),
+    syncStatusEl(globalThis.__fsApp || {}));
   const el = h('section', { class: 'screen parent', 'data-screen': screenName }, h('div', { class: 'p-inner' }, header, ...kids));
   mount(el);
   return el;
@@ -60,6 +134,7 @@ export function welcome(app) {
     h('p', {}, `To start playing you only need group 1: ${first.total} sounds, about two minutes of recording. Later groups open for your child as you record them and as earlier sounds become solid.`),
     h('div', { class: 'p-actions' },
       h('button', { class: 'p-btn primary', type: 'button', 'data-testid': 'start-recording', onclick: () => app.go('studio', { group: first.group }) }, 'Record group 1')),
+    syncCard(app, 'welcome'),
     h('div', { class: 'p-card' },
       h('h2', {}, 'Moving from another device?'),
       importControl(app)));
@@ -83,6 +158,7 @@ export function menu(app) {
       tile('Settings and backup', 'Word speech, session length, export and import', () => app.go('settings'), 'open-settings')),
     h('div', { class: 'p-actions' },
       h('button', { class: 'p-btn primary', type: 'button', 'data-testid': 'back-to-child', onclick: () => app.go('home') }, 'Back to the child screen')),
+    syncCard(app, 'menu'),
     dataWarnings(app));
 }
 
@@ -221,6 +297,7 @@ export function studio(app, opts = {}) {
       const wasNew = !app.recordings.has(id);
       app.recordings.set(id, rec);
       audio.forget(id);
+      app.sync?.changed('recording'); // uploaded straight away (in the background)
       state = 'idle';
       const g = app.data.sounds.find((s) => s.id === id).graphemes[0];
       if (processed.silent) {
@@ -298,6 +375,7 @@ function importControl(app) {
         try {
           await app.store.importBackup(obj);
           await app.loadState();
+          app.sync?.changed('import');
           app.go('parentMenu');
         } catch (e) {
           status.textContent = e.message;
@@ -306,7 +384,8 @@ function importControl(app) {
       const hasData = app.recordings.size > 0 || Object.keys(app.progress.s1).length > 0;
       if (!hasData) { await doImport(); return; }
       confirmBox.replaceChildren(
-        notice('warn', `This replaces everything on this device with the backup from ${String(obj.exportedAt || 'an unknown date').slice(0, 10)} (${(obj.recordings || []).length} recordings).`),
+        notice('warn', `This replaces everything on this device with the backup from ${String(obj.exportedAt || 'an unknown date').slice(0, 10)} (${(obj.recordings || []).length} recordings).`,
+          app.sync?.enabled ? ' This device syncs, so the backup is then merged with what is on the server: nothing is removed there.' : ''),
         h('div', { class: 'p-actions' },
           h('button', { class: 'p-btn danger', type: 'button', 'data-testid': 'confirm-import', onclick: doImport }, 'Replace everything'),
           h('button', { class: 'p-btn', type: 'button', onclick: () => { confirmBox.replaceChildren(); input.value = ''; } }, 'Cancel')));
@@ -330,6 +409,9 @@ export function settings(app) {
           await app.store.resetProgress();
           app.progress = { s1: {}, s2: {} };
           app.readiness = [];
+          app.meta.resetAt = Date.now(); // synced devices drop everything played before this
+          await app.save('meta');
+          app.sync?.changed('reset');
           resetBox.replaceChildren(notice('good', 'Progress has been reset.'));
         },
       }, 'Yes, erase progress'),
