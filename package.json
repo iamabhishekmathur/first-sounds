@@ -1,0 +1,9 @@
+{
+  "name": "first-sounds",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node tests/server.mjs 8080",
+    "test": "node --test \"tests/**/*.test.mjs\""
+  }
+}

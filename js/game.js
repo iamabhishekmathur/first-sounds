@@ -230,7 +230,7 @@ function done(app, s) {
   mount(h('section', { class: 'screen child done', 'data-screen': 'done' },
     topbar(app, s),
     h('div', { class: 'done-center' },
-      h('div', { class: 'done-pic', 'aria-hidden': 'true' }, '🌈'),
+      h('div', { class: 'done-pic', 'aria-hidden': 'true' }, '🌻'),
       h('p', { class: 'done-text' }, 'all done'),
       slot),
     prompt('All done for today. A cuddle and a chat about the pictures is a lovely way to finish.')));

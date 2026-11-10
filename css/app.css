@@ -150,7 +150,7 @@ button:focus-visible { outline: 4px solid var(--accent); outline-offset: 4px; }
 .choices { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(20px, 3.5vw, 44px); }
 .choice {
   position: relative;
-  width: clamp(150px, 24vmin, 230px); aspect-ratio: 1;
+  width: clamp(150px, 28vmin, 260px); aspect-ratio: 1;
   border: 6px solid transparent; border-radius: var(--radius);
   background: var(--card);
   box-shadow: 0 10px 0 var(--line);
@@ -158,7 +158,7 @@ button:focus-visible { outline: 4px solid var(--accent); outline-offset: 4px; }
   padding: 0;
   transition: transform 0.2s;
 }
-.choices.n3 .choice { width: clamp(140px, 22vmin, 210px); }
+.choices.n3 .choice { width: clamp(140px, 25vmin, 240px); }
 .choice:active { transform: translateY(4px); }
 .choice .emoji { font: clamp(80px, 13vmin, 130px)/1 var(--emoji-font); }
 .letter { font-family: var(--letter-font); font-weight: 600; line-height: 1; text-transform: none; }
@@ -202,7 +202,7 @@ button:focus-visible { outline: 4px solid var(--accent); outline-offset: 4px; }
 .ready-row .ready-pic { font-size: clamp(80px, 14vmin, 130px); }
 
 /* done */
-.done-pic { font: clamp(140px, 26vmin, 220px)/1 var(--emoji-font); animation: float 4s ease-in-out infinite; }
+.done-pic { font: clamp(130px, 22vmin, 180px)/1.15 var(--emoji-font); animation: float 4s ease-in-out infinite; }
 .done-text { margin: 0; font: 600 44px/1 var(--letter-font); color: var(--ink); }
 .again-slot { min-height: 190px; display: flex; align-items: center; }
 .big-play.again { width: 170px; animation: appear 0.6s ease-out; }
@@ -225,6 +225,7 @@ button:focus-visible { outline: 4px solid var(--accent); outline-offset: 4px; }
   .choice, .choices.n3 .choice { width: clamp(124px, 30vh, 200px); }
   .replay { width: 124px; }
   .choice .emoji { font-size: 76px; }
+  .speaker { width: 52px; height: 52px; padding: 12px; right: -10px; bottom: -10px; }
 }
 
 /* ---------- parent screens ---------- */

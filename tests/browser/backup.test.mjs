@@ -58,6 +58,13 @@ test('export then import restores recordings, progress, readiness and settings',
   await b.page.setInputFiles('[data-testid="import-file"]', junk);
   await b.page.waitForFunction(() => /not a First Sounds backup/.test(document.querySelector('[data-testid="import-status"]').textContent));
   assert.deepEqual(await storedState(b.page), original, 'nothing changed');
+  // A real backup over existing data needs an explicit confirmation.
+  await b.page.setInputFiles('[data-testid="import-file"]', file);
+  await b.page.waitForSelector('[data-testid="confirm-import"]');
+  assert.equal(await b.page.getAttribute('[data-screen]', 'data-screen'), 'settings', 'not replaced until confirmed');
+  await b.page.tap('[data-testid="confirm-import"]');
+  await b.page.waitForSelector('[data-screen="parent-menu"]');
+  assert.deepEqual(await storedState(b.page), original);
   assert.deepEqual(b.errors, []);
   await b.context.close();
 });
