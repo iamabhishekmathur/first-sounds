@@ -10,6 +10,7 @@ import { dayKey, mulberry32 } from './logic.js';
 import * as audio from './audio.js';
 import * as game from './game.js';
 import * as parent from './parent.js';
+import * as tracker from './tracker-view.js';
 
 export const DEFAULT_SETTINGS = { speakWords: true, roundsPerSession: 6 };
 
@@ -22,6 +23,7 @@ const screens = {
   studio: parent.studio,
   progress: parent.progressView,
   settings: parent.settings,
+  tracker: tracker.trackerView,
   home: game.home,
 };
 
@@ -88,7 +90,7 @@ const app = {
   /** A sync brought new data. Only screens that are safe to redraw are refreshed. */
   onSynced() {
     if (this.session) return; // never interrupt the child mid-game
-    if (this.screen === 'home' || this.screen === 'parentMenu' || this.screen === 'progress') this.go(this.screen);
+    if (this.screen === 'home' || this.screen === 'parentMenu' || this.screen === 'progress' || this.screen === 'tracker') this.go(this.screen);
   },
 };
 

@@ -100,7 +100,7 @@ function syncCard(app, where) {
   return card;
 }
 
-function page(screenName, title, { back } = {}, ...kids) {
+export function page(screenName, title, { back } = {}, ...kids) {
   setMode('parent');
   const header = h('header', { class: 'p-header' },
     back ? h('button', { class: 'p-back', type: 'button', onclick: back.go }, `‹ ${back.label}`) : null,
@@ -111,7 +111,7 @@ function page(screenName, title, { back } = {}, ...kids) {
   return el;
 }
 
-function storageNotices(app) {
+export function storageNotices(app) {
   return [
     app.store && !app.store.persistent
       ? notice('warn', `Storage is not available (${app.store.problem}). The app works, but recordings and progress will be lost when this page closes. Private browsing can cause this.`)
@@ -171,6 +171,7 @@ export function menu(app) {
     !playable ? notice('info', 'Record all of group 1 to start playing.') : null,
     h('div', { class: 'p-tiles' },
       tile('Recording studio', `${recordedTotal} of ${app.data.sounds.length} sounds recorded`, () => app.go('studio'), 'open-studio'),
+      tile('Tracker', 'Practice days, sessions, accuracy, mix-ups', () => app.go('tracker'), 'open-tracker'),
       tile('Progress', 'Per sound, per stage, and readiness', () => app.go('progress'), 'open-progress'),
       tile('Settings and backup', 'Word speech, session length, export and import', () => app.go('settings'), 'open-settings')),
     h('div', { class: 'p-actions' },
