@@ -81,10 +81,11 @@ export const log = (page) => page.evaluate(() => globalThis.__fsLog);
 
 /** Press and hold the parent gate. */
 export async function holdGate(page, ms = 2200) {
-  const gate = page.locator('[data-testid="gate"]');
+  const gate = await page.waitForSelector('[data-testid="gate"]');
   await gate.dispatchEvent('pointerdown', { pointerId: 1, pointerType: 'touch', isPrimary: true });
   await page.waitForTimeout(ms);
-  await gate.dispatchEvent('pointerup', { pointerId: 1, pointerType: 'touch', isPrimary: true });
+  // The gate may already be gone (screen changed), so dispatch on the handle, not a locator.
+  await gate.evaluate((el) => el.dispatchEvent(new PointerEvent('pointerup', { pointerId: 1, pointerType: 'touch', bubbles: true })));
 }
 
 /** History entries for seeding: n rounds, all correct unless given, spread over days. */

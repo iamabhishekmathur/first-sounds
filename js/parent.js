@@ -6,6 +6,7 @@ import {
   readinessByDate, readinessPassedDays, wordsStartingWith,
 } from './logic.js';
 import * as audio from './audio.js';
+import { checkBackup } from './storage.js';
 
 const STATUS_LABEL = { not_started: 'not started', learning: 'learning', solid: 'solid' };
 
@@ -217,12 +218,21 @@ export function studio(app, opts = {}) {
       } catch (e) {
         app.saveError = e.message || String(e);
       }
+      const wasNew = !app.recordings.has(id);
       app.recordings.set(id, rec);
       audio.forget(id);
       state = 'idle';
-      message = processed.silent
-        ? { kind: 'warn', text: 'That was very quiet. Play it back, and re-record closer to the microphone if needed.' }
-        : { kind: 'good', text: 'Saved. Playing it back now.' };
+      const g = app.data.sounds.find((s) => s.id === id).graphemes[0];
+      if (processed.silent) {
+        message = { kind: 'warn', text: `"${g}" was very quiet. Listen, and re-record closer to the microphone if needed.` };
+      } else {
+        message = { kind: 'good', text: `Saved "${g}" and playing it back.${wasNew ? ' Tap its tile to re-record.' : ''}` };
+        // After a first recording, move on to the next unrecorded sound in this group.
+        if (wasNew) {
+          const nextUp = groupProgress(app.data, app.recorded()).find((x) => x.group === group).sounds.find((s) => !app.recordings.has(s.id));
+          if (nextUp) selected = nextUp.id;
+        }
+      }
       render();
       audio.playRecording(rec);
     } catch (e) {
@@ -282,6 +292,8 @@ function importControl(app) {
       if (!file) return;
       let obj;
       try { obj = JSON.parse(await file.text()); } catch { status.textContent = 'That file could not be read as a backup.'; return; }
+      const bad = checkBackup(obj);
+      if (bad) { status.textContent = bad; input.value = ''; return; }
       const doImport = async () => {
         try {
           await app.store.importBackup(obj);
