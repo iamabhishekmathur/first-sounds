@@ -24,12 +24,12 @@ export async function setup() {
   };
 }
 
-/** A fresh, isolated context (own IndexedDB) with an iPad-landscape touch viewport. */
+/** A fresh, isolated context (own IndexedDB) with an iPad-landscape touch viewport (touch: false for the TV). */
 // Tests run with reduced motion by default (looping animations make Playwright wait for stability);
 // screenshots pass motion: 'no-preference'.
-export async function newPage(env, { viewport = IPAD_LANDSCAPE, scale = 1, mic = true, init, isMobile = false, motion = 'reduce' } = {}) {
+export async function newPage(env, { viewport = IPAD_LANDSCAPE, scale = 1, mic = true, init, isMobile = false, motion = 'reduce', touch = true } = {}) {
   const context = await env.browser.newContext({
-    viewport, deviceScaleFactor: scale, hasTouch: true, isMobile, reducedMotion: motion,
+    viewport, deviceScaleFactor: scale, hasTouch: touch, isMobile, reducedMotion: motion,
     permissions: mic ? ['microphone'] : [],
     acceptDownloads: true,
   });
