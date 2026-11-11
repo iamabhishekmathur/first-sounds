@@ -8,6 +8,7 @@ import {
 import * as audio from './audio.js';
 import { checkBackup } from './storage.js';
 import { STATUS_TEXT } from './sync.js';
+import { TV } from './tv.js';
 
 const STATUS_LABEL = { not_started: 'not started', learning: 'learning', solid: 'solid' };
 
@@ -49,7 +50,12 @@ function syncStatusEl(app) {
         el.dataset.status = app.sync.status;
         el.textContent = statusText(app);
       }
-      for (const el of document.querySelectorAll('[data-sync-card]')) el.replaceWith(syncCard(app, el.dataset.syncCard));
+      for (const el of document.querySelectorAll('[data-sync-card]')) {
+        const had = TV && el.contains(document.activeElement) ? document.activeElement.dataset.testid : null;
+        const fresh = syncCard(app, el.dataset.syncCard);
+        el.replaceWith(fresh);
+        if (had) (fresh.querySelector(`[data-testid="${had}"]`) || fresh.querySelector('button, input'))?.focus(); // keep the remote's place
+      }
     });
   }
   return h('span', { class: 'p-sync', 'data-testid': 'sync-status', 'data-status': app.sync.status, role: 'status' }, statusText(app));
@@ -65,6 +71,7 @@ function syncCard(app, where) {
     const input = h('input', {
       type: 'text', class: 'p-input', 'data-testid': 'sync-code', autocomplete: 'off', autocapitalize: 'none',
       autocorrect: 'off', spellcheck: 'false', enterkeyhint: 'go', placeholder: 'for example: apple-river-moon-42', 'aria-label': 'Family code',
+      'data-autofocus': where === 'tv',
     });
     const btn = h('button', { class: 'p-btn primary', type: 'button', 'data-testid': 'sync-enter' }, 'Sync');
     const go = async () => {
@@ -74,15 +81,22 @@ function syncCard(app, where) {
       btn.disabled = false;
       if (r === 'empty') { msg.textContent = 'Type your family code first.'; return; }
       if (r === 'wrong-code') { msg.textContent = 'That code was not accepted. Check it and try again.'; input.select(); return; }
+      if (where === 'tv') { app.go('home'); return; } // the games, or a calm note until recordings arrive
       if (where === 'welcome' && app.recordings.size > 0) { app.go('parentMenu'); return; }
       app.go(where === 'welcome' ? 'welcome' : 'parentMenu');
     };
     btn.addEventListener('click', go);
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+    input.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      if (TV && !input.value.trim()) return; // OK on the empty field opens the TV's keyboard
+      go();
+    });
     card = h('div', { class: 'p-card', 'data-sync-card': where, 'data-testid': 'sync-card' },
       h('h2', {}, 'Sync with your family code'),
       sync.status === 'wrong-code' ? notice('warn', 'The family code saved on this device was not accepted. Enter it again.') : null,
-      h('p', {}, 'Saves recordings, progress and settings on your family\'s server, so they follow you to your other devices. Enter the code once on each device.'),
+      h('p', {}, TV
+        ? 'Loads the recordings you made on the iPad or laptop, and keeps progress and settings in step with them. Enter the code once on this TV: select the box and press OK to type, then choose Sync.'
+        : 'Saves recordings, progress and settings on your family\'s server, so they follow you to your other devices. Enter the code once on each device.'),
       h('div', { class: 'p-actions' }, input, btn),
       msg);
   } else {
@@ -93,7 +107,7 @@ function syncCard(app, where) {
         h('button', { class: 'p-btn', type: 'button', 'data-testid': 'sync-now', onclick: () => sync.now() }, 'Sync now'),
         h('button', {
           class: 'p-btn', type: 'button', 'data-testid': 'sync-forget',
-          onclick: async () => { await sync.forget(); app.go(where === 'welcome' ? 'welcome' : 'parentMenu'); },
+          onclick: async () => { await sync.forget(); app.go(where === 'welcome' ? 'welcome' : where === 'tv' ? 'tvSetup' : 'parentMenu'); },
         }, 'Stop syncing on this device')),
       h('p', { class: 'p-muted' }, 'Stopping keeps everything on this device and on the server.'));
   }
@@ -157,9 +171,47 @@ export function welcome(app) {
       importControl(app)));
 }
 
+/* ---------- first run on the TV ---------- */
+
+/** The TV has no microphone: its first screen asks for the family code, to load the recordings. */
+export function tvSetup(app) {
+  page('tv-setup', 'First Sounds on the TV', {},
+    ...storageNotices(app),
+    h('p', { class: 'p-lead' }, 'Enter your family code to load your recordings.'),
+    h('p', {}, 'You record the sounds on the iPad or laptop. The code is in the parent area there, under Sync. Once it is entered here, the recordings and progress come to this TV by themselves.'),
+    syncCard(app, 'tv'),
+    app.sync && app.sync.enabled
+      ? h('div', { class: 'p-actions' }, h('button', { class: 'p-btn primary', type: 'button', 'data-testid': 'back-to-child', onclick: () => app.go('home') }, 'Go to the child screen'))
+      : null);
+}
+
 /* ---------- parent menu ---------- */
 
+function tvMenu(app) {
+  const groups = groupProgress(app.data, app.recorded());
+  const playable = canPlay(app.data, app.recorded(), app.progress);
+  const passed = readinessPassedDays(app.readiness);
+  const tile = (label, sub, onclick, testid) => h('button', { class: 'p-tile', type: 'button', onclick, 'data-testid': testid }, h('strong', {}, label), h('span', {}, sub));
+  const recordedTotal = groups.reduce((n, g) => n + g.recorded, 0);
+  page('parent-menu', 'Parent area', {},
+    ...storageNotices(app),
+    passed >= 3 ? notice('good', `Your child picked the right order in the readiness check on ${passed} different days. They may be ready for blending, which comes in a later version.`) : null,
+    !playable ? notice('info', 'Record all of group 1 on the iPad or laptop to start playing here.') : null,
+    h('div', { class: 'p-tiles' },
+      tile('Tracker', 'Practice days, sessions, accuracy, mix-ups', () => app.go('tracker'), 'open-tracker'),
+      tile('Progress', 'Per sound, per stage, and readiness', () => app.go('progress'), 'open-progress'),
+      tile('Settings', 'Word speech and session length', () => app.go('settings'), 'open-settings')),
+    h('div', { class: 'p-actions' },
+      h('button', { class: 'p-btn primary', type: 'button', 'data-testid': 'back-to-child', 'data-autofocus': '', onclick: () => app.go('home') }, 'Back to the child screen')),
+    syncCard(app, 'menu'),
+    h('div', { class: 'p-card', 'data-testid': 'tv-record-note' },
+      h('h2', {}, 'Recording'),
+      h('p', {}, `${recordedTotal} of ${app.data.sounds.length} sounds recorded. Recording is done on the iPad or laptop (parent area, Recording studio): this TV has no microphone. New recordings arrive here through sync.`)),
+    dataWarnings(app));
+}
+
 export function menu(app) {
+  if (TV) { tvMenu(app); return; }
   const groups = groupProgress(app.data, app.recorded());
   const playable = canPlay(app.data, app.recorded(), app.progress);
   const passed = readinessPassedDays(app.readiness);
@@ -458,7 +510,7 @@ export function settings(app) {
     }
   };
 
-  page('settings', 'Settings and backup', { back: { label: 'Parent area', go: () => app.go('parentMenu') } },
+  page('settings', TV ? 'Settings' : 'Settings and backup', { back: { label: 'Parent area', go: () => app.go('parentMenu') } },
     ...storageNotices(app),
     h('div', { class: 'p-card' },
       h('h2', {}, 'Game'),
@@ -467,7 +519,7 @@ export function settings(app) {
           type: 'checkbox', checked: app.settings.speakWords, 'data-testid': 'speak-words',
           onchange: (e) => { app.settings.speakWords = e.target.checked; save(); },
         }),
-        h('span', {}, 'Say whole words aloud (device voice) when a picture or its speaker is tapped. Single sounds always use your recordings.')),
+        h('span', {}, `Say whole words aloud (device voice) when a picture or its speaker is ${TV ? 'chosen' : 'tapped'}. Single sounds always use your recordings.`)),
       h('label', { class: 'p-row' },
         h('span', {}, 'Rounds per session'),
         h('input', {
@@ -475,7 +527,7 @@ export function settings(app) {
           oninput: (e) => { app.settings.roundsPerSession = Number(e.target.value); roundsOut.textContent = e.target.value; save(); },
         }),
         roundsOut)),
-    h('div', { class: 'p-card' },
+    TV ? null : h('div', { class: 'p-card' }, // no backups on the TV: they are made on the iPad or laptop
       h('h2', {}, 'Backup'),
       h('p', {}, 'One file with all recordings, progress and settings. Keep it somewhere safe or use it to move to another device.'),
       h('div', { class: 'p-actions' }, h('button', { class: 'p-btn primary', type: 'button', 'data-testid': 'export', onclick: doExport }, 'Export backup')),

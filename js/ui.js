@@ -1,5 +1,7 @@
 // Tiny DOM helpers shared by the screens.
 
+import { TV, focusDefault, isOK } from './tv.js';
+
 export function h(tag, props = {}, ...kids) {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(props || {})) {
@@ -23,6 +25,7 @@ export function mount(el) {
   root.replaceChildren(el);
   root.scrollTop = 0;
   window.scrollTo(0, 0);
+  if (TV) focusDefault(); // on the TV, focus always starts on the screen's first choice or button
 }
 
 /** 'child' screens lock scrolling, selection and zoom; 'parent' screens scroll normally. */
@@ -44,25 +47,37 @@ export function icon(name) {
 /**
  * Parent gate: press and hold for `ms`. A ring fills while held; letting go early cancels.
  * Toddlers tap; they rarely hold still on one small spot for two seconds.
+ * On the TV it is 3 seconds, and holding OK on the remote works too (keydown with no keyup).
  */
-export function holdGate(onOpen, ms = 2000) {
+export function holdGate(onOpen, ms = TV ? 3000 : 2000) {
   const ring = '<svg viewBox="0 0 64 64" aria-hidden="true" class="gate-ring"><circle cx="32" cy="32" r="28"/></svg>';
+  const secs = Math.round(ms / 1000);
   const btn = h('button', {
     class: 'gate', type: 'button', 'data-testid': 'gate',
-    'aria-label': 'Parent area: press and hold for 2 seconds',
+    'aria-label': TV ? `Parent area: hold OK for ${secs} seconds` : `Parent area: press and hold for ${secs} seconds`,
     style: `--hold:${ms}ms`,
   }, h('span', { html: ring }), icon('gear'));
   let timer = null;
   const cancel = () => { clearTimeout(timer); timer = null; btn.classList.remove('holding'); };
-  btn.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
+  const begin = () => {
     if (timer) return;
     btn.classList.add('holding');
     timer = setTimeout(() => { timer = null; btn.classList.remove('holding'); onOpen(); }, ms);
-  });
+  };
+  btn.addEventListener('pointerdown', (e) => { e.preventDefault(); begin(); });
   for (const t of ['pointerup', 'pointercancel', 'pointerleave']) btn.addEventListener(t, cancel);
   btn.addEventListener('contextmenu', (e) => e.preventDefault());
   btn.addEventListener('click', (e) => e.preventDefault());
+  if (TV) {
+    btn.dataset.hold = '';
+    btn.addEventListener('keydown', (e) => {
+      if (!isOK(e)) return;
+      e.preventDefault();
+      if (!e.repeat) begin(); // a remote may repeat keydown while OK is held: the first one starts the hold
+    });
+    btn.addEventListener('keyup', (e) => { if (isOK(e)) { e.preventDefault(); cancel(); } });
+    btn.addEventListener('blur', cancel);
+  }
   return btn;
 }
 

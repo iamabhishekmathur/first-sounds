@@ -4,6 +4,7 @@
 import { h, notice } from './ui.js';
 import { page, storageNotices, MODE_LABEL, notTargetReason } from './parent.js';
 import { canPlay, MIN_WORDS_FOR_MODE } from './logic.js';
+import { TV } from './tv.js';
 import {
   summary, dailySeries, solidOverTime, recentSessions, soundRows, sortRows, SORTS, mixUps,
   recordingStatus, shortDay, relativeDay, lengthText,
@@ -257,7 +258,9 @@ function recordingsSection(app) {
     rs.untrimmed.length
       ? h('p', { 'data-testid': 'tk-untrimmed' }, 'Not trimmed (the silence around the sound could not be removed, so it may start late): ', chips(rs.untrimmed), '. Re-record these in the studio.')
       : null,
-    h('div', { class: 'p-actions' }, h('button', { class: 'p-btn', type: 'button', onclick: () => app.go('studio') }, 'Open the recording studio')));
+    TV
+      ? h('p', { class: 'p-muted' }, 'Record and re-record on the iPad or laptop: the recordings come to this TV through sync.')
+      : h('div', { class: 'p-actions' }, h('button', { class: 'p-btn', type: 'button', onclick: () => app.go('studio') }, 'Open the recording studio')));
 }
 
 function emptySection(app) {
@@ -265,8 +268,10 @@ function emptySection(app) {
   return h('section', { class: 'p-card tk-empty', 'data-testid': 'tracker-empty' },
     h('h2', {}, 'Nothing played yet'),
     h('p', {}, 'Once your child has played, this page shows how often you practise, how many taps are right first time, which sounds are solid or still learning, and which sounds get mixed up.'),
-    h('p', { class: 'p-muted' }, playable ? 'Everything is ready: go back to the child screen and tap the big button together.' : 'First record the group 1 sounds in the recording studio.'),
-    h('div', { class: 'p-actions' }, playable
+    h('p', { class: 'p-muted' }, playable
+      ? `Everything is ready: go back to the child screen and ${TV ? 'press OK on' : 'tap'} the big button together.`
+      : TV ? 'First record the group 1 sounds on the iPad or laptop.' : 'First record the group 1 sounds in the recording studio.'),
+    h('div', { class: 'p-actions' }, playable || TV
       ? h('button', { class: 'p-btn primary', type: 'button', onclick: () => app.go('home') }, 'Back to the child screen')
       : h('button', { class: 'p-btn primary', type: 'button', onclick: () => app.go('studio') }, 'Open the recording studio')));
 }

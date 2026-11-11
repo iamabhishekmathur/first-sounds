@@ -5,8 +5,10 @@ import { h, mount, setMode, holdGate, icon } from './ui.js';
 import { planRound, recordRound, readinessEligible, planReadiness, canPlay } from './logic.js';
 import * as audio from './audio.js';
 import { newId, MAX_WRONG_TAPS } from './syncdoc.js';
+import { TV } from './tv.js';
 
 const RESOLVE_DELAY = 2200;
+const TAP = TV ? 'choose' : 'tap'; // the parent prompt's verb: the TV has a remote, not a touch screen
 
 /** How the parent prompt names each position mode ("…tap the picture that <phrase>."). */
 export const POSITION_PHRASE = { start: 'starts with this sound', end: 'ends with this sound', anywhere: 'has this sound in it' };
@@ -38,15 +40,31 @@ function prompt(text, ...extra) {
 export function home(app) {
   setMode('child');
   const playable = canPlay(app.data, app.recorded(), app.progress);
+  if (!playable && TV) { tvWaiting(app); return; }
   const body = playable
-    ? h('button', { class: 'big-play', type: 'button', 'aria-label': 'Play', 'data-testid': 'play', onclick: () => startSession(app) }, icon('play'))
+    ? h('button', { class: 'big-play', type: 'button', 'aria-label': 'Play', 'data-testid': 'play', 'data-autofocus': TV, onclick: () => startSession(app) }, icon('play'))
     : h('div', { class: 'home-wait', 'aria-hidden': 'true' }, '🎙️');
   mount(h('section', { class: 'screen child home', 'data-screen': 'home' },
     topbar(app, null),
     h('div', { class: 'home-center' }, body),
     prompt(playable
-      ? 'Tap the big button together to start.'
+      ? (TV ? 'Press OK together to start.' : 'Tap the big button together to start.')
       : 'Record the group 1 sounds first: hold the corner button for 2 seconds to open the parent area.')));
+}
+
+/** TV, before the synced recordings are there: a calm note for the parent instead of the games. */
+function tvWaiting(app) {
+  const synced = app.sync && app.sync.enabled;
+  const bar = topbar(app, null);
+  bar.querySelector('.gate').dataset.autofocus = '';
+  mount(h('section', { class: 'screen child home tv-wait', 'data-screen': 'home', 'data-waiting': '1' },
+    bar,
+    h('div', { class: 'home-center' },
+      h('div', { class: 'home-wait', 'aria-hidden': 'true' }, '🌱'),
+      h('p', { class: 'tv-wait-text', 'data-testid': 'tv-waiting' }, synced
+        ? 'The games start once the group 1 sounds are recorded. Record them on the iPad or laptop: they arrive here by themselves.'
+        : 'Enter your family code to load your recordings.')),
+    prompt('For the parent area, hold OK on the gear for 3 seconds.')));
 }
 
 export function startSession(app) {
@@ -105,11 +123,14 @@ function renderRound(app, s, round) {
       'aria-label': ch.kind === 'word' ? ch.word : `letter ${ch.grapheme}`,
     }, ...inner);
     if (ch.kind === 'word' && app.settings.speakWords) {
-      el.append(h('span', {
+      const sp = h('span', {
         class: 'speaker', role: 'button', 'aria-label': `say ${ch.word}`, 'data-testid': 'say-word',
+        tabindex: TV ? '0' : null, 'data-nav-explicit': TV,
         onpointerdown: (e) => e.stopPropagation(),
         onclick: (e) => { e.stopPropagation(); speak(ch.word); },
-      }, icon('speaker')));
+      }, icon('speaker'));
+      el.append(sp);
+      if (TV) { el.__nav = { down: sp }; sp.__nav = { up: el }; } // on the remote: Down from a picture to its speaker
     }
     el.addEventListener('click', () => onTap(el, ch));
     return el;
@@ -158,15 +179,15 @@ function renderRound(app, s, round) {
       onclick: () => { lead.classList.remove('invite'); playTarget(); },
     }, h('span', { class: 'letter' }, round.target.graphemes[0]));
     lead.classList.add('invite');
-    text = `Tap the letter to hear it, then find the picture that ${POSITION_PHRASE[round.position] || POSITION_PHRASE.start}.`;
+    text = `${TV ? 'Press OK on the letter' : 'Tap the letter'} to hear it, then find the picture that ${POSITION_PHRASE[round.position] || POSITION_PHRASE.start}.`;
   } else {
     lead = h('button', {
       class: 'replay', type: 'button', 'data-testid': 'replay', 'aria-label': 'hear the sound again',
       onclick: () => playTarget(),
     }, icon('speaker'));
     text = round.mode === 'hear'
-      ? `Listen, then tap the picture that ${POSITION_PHRASE[round.position] || POSITION_PHRASE.start}.`
-      : 'Listen, then tap the letter that makes this sound.';
+      ? `Listen, then ${TAP} the picture that ${POSITION_PHRASE[round.position] || POSITION_PHRASE.start}.`
+      : `Listen, then ${TAP} the letter that makes this sound.`;
   }
 
   const screen = h('section', {
@@ -213,19 +234,29 @@ function readiness(app, s) {
   const endSlide = () => { startX = null; };
   track.addEventListener('pointerup', endSlide);
   track.addEventListener('pointercancel', endSlide);
+  if (TV) {
+    // No finger to slide on the TV: the parent points along the pictures, then presses OK.
+    track.setAttribute('role', 'button');
+    track.setAttribute('tabindex', '0');
+    track.setAttribute('aria-label', `${word('ab')}: press OK`);
+    track.dataset.autofocus = '';
+    track.addEventListener('click', goPhase2);
+  }
 
   mount(h('section', { class: 'screen child readiness', 'data-screen': 'readiness', 'data-phase': '1' },
     topbar(app, s),
     h('div', { class: 'ready-area' }, track, arrow),
-    prompt(`Slide a finger left to right and say: this is ${word('ab')}.`,
-      ' ', h('button', { class: 'prompt-link', type: 'button', onclick: goPhase2 }, 'next'))));
+    TV
+      ? prompt(`Point at each picture from left to right and say: this is ${word('ab')}. Then press OK.`)
+      : prompt(`Slide a finger left to right and say: this is ${word('ab')}.`,
+        ' ', h('button', { class: 'prompt-link', type: 'button', onclick: goPhase2 }, 'next'))));
 
   function phase2() {
     if (!alive(app, s)) return;
     let answered = false;
     const rows = plan.rows.map((order) => {
       const row = h('button', {
-        class: 'ready-row', type: 'button', 'data-order': order, 'aria-label': word(order),
+        class: 'ready-row', type: 'button', 'data-order': order, 'aria-label': word(order), 'data-autofocus': TV && order === plan.rows[0],
         onclick: () => {
           if (answered || !alive(app, s)) return;
           answered = true;
@@ -257,13 +288,19 @@ function done(app, s) {
     onclick: () => startSession(app),
   }, icon('play'));
   const slot = h('div', { class: 'again-slot' });
+  const bar = topbar(app, s);
+  if (TV) bar.querySelector('.gate').dataset.autofocus = ''; // until "play again" appears
   mount(h('section', { class: 'screen child done', 'data-screen': 'done' },
-    topbar(app, s),
+    bar,
     h('div', { class: 'done-center' },
       h('div', { class: 'done-pic', 'aria-hidden': 'true' }, '🌻'),
       h('p', { class: 'done-text' }, 'all done'),
       slot),
     prompt('All done for today. A cuddle and a chat about the pictures is a lovely way to finish.')));
   // No way to restart for 3 seconds, so the session has a calm ending.
-  setTimeout(() => { if (alive(app, s)) slot.append(again); }, 3000);
+  setTimeout(() => {
+    if (!alive(app, s)) return;
+    slot.append(again);
+    if (TV && !document.activeElement?.closest('.gate.holding')) again.focus({ preventScroll: true });
+  }, 3000);
 }

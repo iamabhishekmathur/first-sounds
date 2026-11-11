@@ -184,8 +184,18 @@ export function tone(kind = 'happy') {
 
 /* ---------- whole words only ---------- */
 
+/**
+ * Whole-word speech: the TV wrapper's bridge (Android WebView has no speechSynthesis) if present,
+ * else the Web Speech API, else nothing (speech is optional and never throws).
+ */
 export function speakWord(word, enabled = true) {
   if (!enabled) return;
+  const bridge = globalThis.FirstSoundsTV;
+  if (bridge && typeof bridge.speak === 'function') {
+    log({ type: 'word', word, via: 'tv' });
+    try { bridge.speak(String(word)); } catch { /* speech is optional */ }
+    return;
+  }
   const ss = globalThis.speechSynthesis;
   if (!ss || !globalThis.SpeechSynthesisUtterance) return;
   log({ type: 'word', word });

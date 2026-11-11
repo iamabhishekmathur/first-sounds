@@ -11,6 +11,7 @@ import * as audio from './audio.js';
 import * as game from './game.js';
 import * as parent from './parent.js';
 import * as tracker from './tracker-view.js';
+import * as tv from './tv.js';
 
 export const DEFAULT_SETTINGS = { speakWords: true, roundsPerSession: 6 };
 
@@ -19,6 +20,7 @@ const params = new URLSearchParams(location.search);
 
 const screens = {
   welcome: parent.welcome,
+  tvSetup: parent.tvSetup,
   parentMenu: parent.menu,
   studio: parent.studio,
   progress: parent.progressView,
@@ -79,6 +81,9 @@ const app = {
   },
 
   go(name, opts) {
+    // The TV has no microphone and makes no backups: no recording welcome, no studio.
+    if (tv.TV && name === 'welcome') name = 'tvSetup';
+    if (tv.TV && name === 'studio') name = 'parentMenu';
     this.session = null;
     audio.stop();
     this.screen = name;
@@ -116,6 +121,7 @@ function installGuards() {
 
 async function boot() {
   installGuards();
+  tv.install(app); // remote keys, Back (window.FirstSoundsTV_onBack) and focus; arrow keys only outside TV mode
   const url = params.get('data') || 'data/sounds.json';
   app.dataUrl = url;
   try {
@@ -139,7 +145,8 @@ async function boot() {
     debounceMs: params.has('syncDebounce') ? Number(params.get('syncDebounce')) : 2500,
   });
   await app.sync.load();
-  app.go(app.recordings.size === 0 ? 'welcome' : 'home');
+  if (tv.TV) app.go(app.recordings.size === 0 && !app.sync.enabled ? 'tvSetup' : 'home'); // first run on the TV: the family code
+  else app.go(app.recordings.size === 0 ? 'welcome' : 'home');
   document.body.dataset.ready = '1';
   app.sync.start(); // in the background: the app never waits for the network
 }
