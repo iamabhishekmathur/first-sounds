@@ -403,6 +403,137 @@ button:focus-visible { outline: 4px solid var(--accent); outline-offset: 4px; }
   .tk-charts { grid-template-columns: 1fr; }
 }
 
+/* ---------- reading (stage 3) ---------- */
+.round.reading { --tile: min(150px, calc((100vw - 180px) / var(--n, 3) - 16px), 23vh); }
+.read-area { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(14px, 3vh, 34px); min-height: 0; }
+.read-word {
+  display: grid; grid-template-columns: auto repeat(var(--n), auto) auto; grid-template-rows: auto auto;
+  column-gap: 16px; row-gap: 14px; align-items: center; justify-items: center;
+  touch-action: none; transition: column-gap 0.35s ease-out;
+}
+.read-spacer { width: calc(var(--tile) * 0.62); }
+.gtile {
+  min-width: var(--tile); height: calc(var(--tile) * 1.22); padding: 0 10px;
+  display: flex; align-items: center; justify-content: center;
+  border: 6px solid transparent; border-radius: var(--radius);
+  background: var(--card); box-shadow: 0 10px 0 var(--line);
+  transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.35s;
+}
+.gtile .letter { font-size: calc(var(--tile) * 0.9); }
+.gtile.lit { background: var(--accent-soft); }
+.gtile.now { border-color: var(--accent); transform: translateY(-8px) scale(1.06); background: #ffd2a8; }
+.read-word.fast { column-gap: 0; }
+.read-word.fast .gtile { border-radius: 0; border-left-width: 0; border-right-width: 0; }
+.read-word.fast .gtile:nth-child(2) { border-radius: var(--radius) 0 0 var(--radius); border-left-width: 6px; }
+.read-word.fast .gtile:nth-last-child(3) { border-radius: 0 var(--radius) var(--radius) 0; border-right-width: 6px; }
+.read-word.happy .gtile { border-color: var(--good); animation: happy 0.7s ease-out; }
+.road {
+  position: relative; display: grid; align-items: center; justify-items: center;
+  height: calc(var(--tile) * 0.62); width: 100%; padding: 0; border: 0; background: transparent;
+  touch-action: none; border-radius: 999px;
+}
+.road-bar, .road-fill { position: absolute; left: calc(var(--tile) * 0.31); top: 50%; height: 20px; margin-top: -10px; border-radius: 999px; }
+.road-bar { right: 0; background: var(--line); }
+.road-fill { width: 0; max-width: calc(100% - var(--tile) * 0.31); background: var(--accent); transition: width linear; }
+.road-knob {
+  position: absolute; top: 50%; left: 0; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%;
+  background: var(--card); border: 6px solid var(--accent); transition: left linear; z-index: 2; pointer-events: none;
+  opacity: 0;
+}
+.reading[data-phase="blending"] .road-knob { opacity: 1; }
+.road-go {
+  position: relative; z-index: 3; width: calc(var(--tile) * 0.62); aspect-ratio: 1; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; padding: 18%; padding-left: 22%;
+  background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 0 #b94d1c;
+}
+.road-go .icon { width: 100%; height: 100%; }
+.road-go.invite { animation: breathe 2.4s ease-in-out infinite; }
+.reading:not([data-phase="ready"]) .road-go { animation: none; }
+.road-dot {
+  position: relative; z-index: 1; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--card); border: 5px solid var(--line); transition: background 0.15s, border-color 0.15s;
+}
+.road-dot.on { background: var(--accent); border-color: var(--accent); }
+.read-next { min-height: calc(var(--tile) * 1.5); display: flex; align-items: center; justify-content: center; gap: 32px; }
+.say-fast {
+  width: calc(var(--tile) * 1.05); aspect-ratio: 1; border: 0; border-radius: 50%;
+  background: var(--card); box-shadow: 0 10px 0 var(--line);
+  display: flex; align-items: center; justify-content: center; padding: 0;
+}
+.say-fast-icon { font: calc(var(--tile) * 0.6)/1 var(--emoji-font); }
+.say-fast.invite { animation: breathe 2.4s ease-in-out infinite; border: 6px solid var(--accent); }
+.read-reveal { font: calc(var(--tile) * 1.1)/1 var(--emoji-font); animation: appear 0.6s ease-out; }
+.read-choices .choice { width: calc(var(--tile) * 1.5); }
+.round.reading.checking { --tile: min(104px, calc((100vw - 180px) / var(--n, 3) - 16px), 15vh); }
+.round.reading.checking .read-next { min-height: 0; }
+.round.reading.checking .read-choices .choice { width: min(250px, 30vh); }
+[hidden] { display: none !important; }
+@media (orientation: portrait) {
+  .round.reading { --tile: min(150px, calc((100vw - 150px) / var(--n, 3) - 12px), 16vh); }
+  .read-word { column-gap: 10px; }
+}
+
+/* ---------- studio: words ---------- */
+.p-tab-words { border-style: dashed; }
+.st-words { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.st-word {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 84px; padding: 8px; border: 3px solid transparent; border-radius: 18px;
+  background: var(--card); box-shadow: 0 4px 0 var(--line);
+}
+.st-word.on { border-color: var(--accent); }
+.st-word.done { background: var(--good-soft); }
+.st-word.waiting:not(.on) { opacity: 0.72; }
+.st-word-text { font: 600 32px/1.1 var(--letter-font); }
+.st-word-meta { font-size: 13px; color: var(--muted); text-align: center; }
+.st-level h3 { font-size: 16px; margin: 12px 0 6px; }
+.st-big-word { font-size: 96px; letter-spacing: 0.02em; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- learning path ---------- */
+.lp-now { padding: 14px 20px; }
+.lp-now-where { font-size: 18px; margin: 4px 0; font-weight: 600; }
+.lp-next { font-size: 18px; margin: 4px 0 2px; }
+.lp-path { list-style: none; margin: 16px 0; padding: 0; }
+.lp-step { position: relative; display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 16px; padding-bottom: 18px; }
+.lp-step:not(:last-child)::before { content: ""; position: absolute; left: 26px; top: 56px; bottom: 0; width: 4px; background: var(--line); border-radius: 2px; }
+.lp-step.done:not(:last-child)::before { background: var(--good); }
+.lp-marker {
+  width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 22px; background: var(--card); border: 4px solid var(--line); color: var(--muted); z-index: 1;
+}
+.lp-step.done .lp-marker { background: var(--good); border-color: var(--good); color: #fff; }
+.lp-step.doing .lp-marker { border-color: var(--accent); color: var(--accent); }
+.lp-step.current .lp-marker { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); box-shadow: 0 0 0 6px var(--accent-soft); }
+.lp-step.later .lp-marker { font-size: 20px; background: #f1e7dc; }
+.lp-body { background: var(--card); border-radius: 20px; padding: 10px 20px 14px; box-shadow: 0 4px 0 var(--line); min-width: 0; }
+.lp-step.current .lp-body { box-shadow: 0 0 0 3px var(--accent), 0 4px 0 var(--line); }
+.lp-step.later .lp-body { background: #faf3ea; color: var(--muted); }
+.lp-title { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.screen.parent .lp-title h2 { margin: 6px 0; font-size: 21px; }
+.lp-chip { padding: 2px 10px; border-radius: 999px; font-size: 14px; background: #f1e7dc; color: var(--muted); }
+.lp-chip.done { background: var(--good-soft); color: var(--good); font-weight: 700; }
+.lp-chip.doing { background: var(--warn-soft); color: #6d4a00; }
+.lp-here { font-size: 14px; font-weight: 700; color: var(--accent); }
+.lp-bar { margin: 8px 0 4px; }
+.lp-bar-head { display: flex; justify-content: space-between; gap: 12px; font-size: 15px; }
+.lp-track { height: 16px; margin-top: 4px; border-radius: 999px; background: #f1e7dc; overflow: hidden; }
+.lp-fill { display: block; height: 100%; min-width: 0; border-radius: 999px; background: var(--accent); }
+.lp-step.done .lp-fill, .lp-track.override .lp-fill { background: var(--good); }
+.lp-note { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+.lp-text { margin: 8px 0 2px; color: var(--muted); }
+.lpc-steps { list-style: none; margin: 8px 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.lpc-step { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; padding: 10px 6px; border-radius: 14px; background: #faf3ea; border: 3px solid transparent; }
+.lpc-step.done { background: var(--good-soft); }
+.lpc-step.current { border-color: var(--accent); background: var(--accent-soft); }
+.lpc-mark { font-weight: 800; font-size: 18px; color: var(--muted); }
+.lpc-step.done .lpc-mark { color: var(--good); }
+.lpc-step.current .lpc-mark, .lpc-step.doing .lpc-mark { color: var(--accent); }
+.lpc-name { font-size: 14px; font-weight: 600; line-height: 1.2; }
+.lpc-nums { font-size: 13px; color: var(--muted); }
+.lpc-next { margin: 8px 0 4px; }
+@media (max-width: 720px) { .lpc-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
 /* ---------- TV mode (html.tv): 1920x1080 or 1280x720, seen from about 3 m ----------
    Child screens are sized in vh so both viewports look the same; 5% margins keep everything inside
    the overscan-safe area. Focus is a thick dark ring plus a small scale-up (never colour alone). */
@@ -471,3 +602,17 @@ html.tv .p-input { max-width: 520px; }
   html.tv .screen.child :focus, html.tv .screen.child .speaker:focus, html.tv .p-tile:focus, html.tv .p-btn:focus { transform: none; }
   html.tv .screen.child :focus { outline-width: 1.6vh; }
 }
+
+/* TV: the reading round */
+html.tv .round.reading { --tile: min(25vh, calc((88vw - 22vh) / var(--n, 3) - 2.5vh)); }
+html.tv .round.reading.checking { --tile: min(15vh, calc((88vw - 22vh) / var(--n, 3) - 2.5vh)); }
+html.tv .read-word { column-gap: 2.2vh; row-gap: 2vh; }
+html.tv .gtile { border-width: 0.8vh; border-radius: 4vh; box-shadow: 0 1.2vh 0 var(--line); }
+html.tv .road-bar, html.tv .road-fill { height: 2.6vh; margin-top: -1.3vh; }
+html.tv .road-dot { width: 3.8vh; height: 3.8vh; border-width: 0.7vh; }
+html.tv .road-knob { width: 4.4vh; height: 4.4vh; margin: -2.2vh 0 0 -2.2vh; border-width: 0.8vh; }
+html.tv #app .road:focus { outline-offset: 1.2vh; border-radius: 6vh; transform: none; }
+html.tv #app .road:focus .road-go { transform: scale(1.1); }
+html.tv .read-choices .choice, html.tv .round.reading.checking .read-choices .choice { width: 40vh; }
+html.tv .lpc-name { font-size: 15px; }
+html.tv .read-word.fast .gtile:nth-child(2) { border-left-width: 0.8vh; } html.tv .read-word.fast .gtile:nth-last-child(3) { border-right-width: 0.8vh; }

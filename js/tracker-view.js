@@ -1,17 +1,18 @@
 // The parent's Tracker screen. It only renders: every figure comes from js/tracker.js.
 // Charts are small inline SVGs drawn here, with text labels and a table view, so nothing is colour-only.
 
-import { h, notice } from './ui.js';
+import { h } from './ui.js';
 import { page, storageNotices, MODE_LABEL, notTargetReason } from './parent.js';
 import { canPlay, MIN_WORDS_FOR_MODE } from './logic.js';
 import { TV } from './tv.js';
+import { compactPath } from './course-view.js';
 import {
   summary, dailySeries, solidOverTime, recentSessions, soundRows, sortRows, SORTS, mixUps,
   recordingStatus, shortDay, relativeDay, lengthText,
 } from './tracker.js';
 
 const STATUS_LABEL = { not_started: 'not started', learning: 'learning', solid: 'solid' };
-const STAGE_NAME = { 1: 'Hear it', 2: 'See it' };
+const STAGE_NAME = { 1: 'Hear it', 2: 'See it', 3: 'Read it' };
 const pct = (x) => (x == null ? '–' : `${Math.round(x * 100)}%`);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
@@ -126,7 +127,7 @@ function summarySection(app, sm) {
   }
   const r = sm.readiness;
   const ready = r.tried === 0 ? 'not tried yet'
-    : r.passedDays >= r.needed ? `passed on ${r.passedDays} days: ready for blending` : `passed on ${r.passedDays} of ${r.needed} days`;
+    : r.passedDays >= r.needed ? `passed on ${r.passedDays} days: ready to blend` : `passed on ${r.passedDays} of ${r.needed} days`;
   return h('div', { class: 'tk-stats', 'data-testid': 'tracker-summary' },
     stat('Days practised', `${sm.days7} of the last 7`, `${sm.days30} of the last 30`, 'stat-days'),
     stat('Sessions', sm.sessions ? `${plural(sm.sessions, 'session')}` : 'none yet',
@@ -281,14 +282,14 @@ export function trackerView(app) {
   const sm = summary({ data: app.data, progress: app.progress, sessions: app.sessions, readiness: app.readiness, today });
   const back = { label: 'Parent area', go: () => app.go('parentMenu') };
   if (!sm.hasPlay) {
-    page('tracker', 'Tracker', { back }, ...storageNotices(app), emptySection(app), recordingsSection(app));
+    page('tracker', 'Tracker', { back }, ...storageNotices(app), compactPath(app), emptySection(app), recordingsSection(app));
     return;
   }
   const series = dailySeries(app.progress, app.sessions, today, 30);
   const solid = solidOverTime(app.data, app.progress, today, 30);
   page('tracker', 'Tracker', { back },
     ...storageNotices(app),
-    sm.readiness.passedDays >= sm.readiness.needed ? notice('good', `Passed the readiness check on ${sm.readiness.passedDays} different days: your child may be ready for blending (a later version).`) : null,
+    compactPath(app),
     summarySection(app, sm),
     overTimeSection(app, series, solid, sm.solid[1].total),
     sessionsSection(app, recentSessions(app.sessions, 10)),

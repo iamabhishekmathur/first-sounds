@@ -9,6 +9,9 @@ import * as audio from './audio.js';
 import { checkBackup } from './storage.js';
 import { STATUS_TEXT } from './sync.js';
 import { TV } from './tv.js';
+import { wordsToRecord, stretched, unsolidSounds, blendReady, READINESS_DAYS_NEEDED } from './reading.js';
+import { ROUNDS_MIN, ROUNDS_MAX } from './syncdoc.js';
+import { readingState } from './game.js';
 
 const STATUS_LABEL = { not_started: 'not started', learning: 'learning', solid: 'solid' };
 
@@ -136,9 +139,34 @@ export function storageNotices(app) {
 
 function dataWarnings(app) {
   const w = (app.report && app.report.warnings) || [];
-  if (!w.length) return null;
-  return h('details', { class: 'p-details' }, h('summary', {}, `Sound data: ${w.length} warning${w.length > 1 ? 's' : ''}`),
-    h('ul', {}, w.map((x) => h('li', {}, x))));
+  const rd = app.reading && app.reading.report;
+  return [
+    w.length ? h('details', { class: 'p-details' }, h('summary', {}, `Sound data: ${w.length} warning${w.length > 1 ? 's' : ''}`),
+      h('ul', {}, w.map((x) => h('li', {}, x)))) : null,
+    rd && rd.ok && rd.warnings.length ? h('details', { class: 'p-details', 'data-testid': 'reading-warnings' }, h('summary', {}, `Reading words: ${rd.warnings.length} warning${rd.warnings.length > 1 ? 's' : ''}`),
+      h('ul', {}, rd.warnings.slice(0, 60).map((x) => h('li', {}, x))), rd.warnings.length > 60 ? h('p', {}, `…and ${rd.warnings.length - 60} more.`) : null) : null,
+  ];
+}
+
+/** A parent-facing note when the reading words could not be used (stage 3 is then not offered). */
+export function readingNote(app) {
+  const rd = app.reading && app.reading.report;
+  if (!rd || rd.ok) return null;
+  return notice('warn', h('span', { 'data-testid': 'reading-unavailable' },
+    rd.missing ? 'Reading (stage 3) is not available: the word list data/reading.json could not be loaded. Everything else works as before.'
+      : 'Reading (stage 3) is not available: the word list data/reading.json has problems. Everything else works as before.'),
+    rd.missing ? null : h('ul', { class: 'p-errors' }, rd.errors.slice(0, 10).map((e) => h('li', {}, e))));
+}
+
+/** The menu's note about blending: ready (by the check or the parent) and whether reading is on. */
+function blendNotice(app) {
+  const st = readingState(app);
+  if (!st.ready) return null;
+  if (st.unlocked) return notice('good', h('span', { 'data-testid': 'reading-on' }, `Reading is on: every third round is a reading round (${st.available.length} word${st.available.length === 1 ? '' : 's'} ready).`));
+  const how = st.byCheck ? `Your child picked the right order in the readiness check on ${st.days} different days.` : 'You turned on "ready to blend" in Settings.';
+  return notice('good', how, ' ', st.hasData
+    ? (TV ? 'Reading starts once a word is ready: its sounds solid in See it and recorded on the iPad or laptop (studio, Words tab).' : 'Reading starts once a word is ready: its sounds solid in See it and recorded by you (Recording studio, Words tab).')
+    : 'Reading needs the word list, which is not available (see below).');
 }
 
 /* ---------- data error ---------- */
@@ -190,17 +218,18 @@ export function tvSetup(app) {
 function tvMenu(app) {
   const groups = groupProgress(app.data, app.recorded());
   const playable = canPlay(app.data, app.recorded(), app.progress);
-  const passed = readinessPassedDays(app.readiness);
   const tile = (label, sub, onclick, testid) => h('button', { class: 'p-tile', type: 'button', onclick, 'data-testid': testid }, h('strong', {}, label), h('span', {}, sub));
   const recordedTotal = groups.reduce((n, g) => n + g.recorded, 0);
   page('parent-menu', 'Parent area', {},
     ...storageNotices(app),
-    passed >= 3 ? notice('good', `Your child picked the right order in the readiness check on ${passed} different days. They may be ready for blending, which comes in a later version.`) : null,
+    blendNotice(app),
+    readingNote(app),
     !playable ? notice('info', 'Record all of group 1 on the iPad or laptop to start playing here.') : null,
     h('div', { class: 'p-tiles' },
+      tile('Learning path', 'Where your child is on the whole journey', () => app.go('path'), 'open-path'),
       tile('Tracker', 'Practice days, sessions, accuracy, mix-ups', () => app.go('tracker'), 'open-tracker'),
       tile('Progress', 'Per sound, per stage, and readiness', () => app.go('progress'), 'open-progress'),
-      tile('Settings', 'Word speech and session length', () => app.go('settings'), 'open-settings')),
+      tile('Settings', 'Word speech, session length, ready to blend', () => app.go('settings'), 'open-settings')),
     h('div', { class: 'p-actions' },
       h('button', { class: 'p-btn primary', type: 'button', 'data-testid': 'back-to-child', 'data-autofocus': '', onclick: () => app.go('home') }, 'Back to the child screen')),
     syncCard(app, 'menu'),
@@ -214,18 +243,19 @@ export function menu(app) {
   if (TV) { tvMenu(app); return; }
   const groups = groupProgress(app.data, app.recorded());
   const playable = canPlay(app.data, app.recorded(), app.progress);
-  const passed = readinessPassedDays(app.readiness);
   const tile = (label, sub, onclick, testid) => h('button', { class: 'p-tile', type: 'button', onclick, 'data-testid': testid }, h('strong', {}, label), h('span', {}, sub));
   const recordedTotal = groups.reduce((n, g) => n + g.recorded, 0);
   page('parent-menu', 'Parent area', {},
     ...storageNotices(app),
-    passed >= 3 ? notice('good', `Your child picked the right order in the readiness check on ${passed} different days. They may be ready for blending, which comes in a later version.`) : null,
+    blendNotice(app),
+    readingNote(app),
     !playable ? notice('info', 'Record all of group 1 to start playing.') : null,
     h('div', { class: 'p-tiles' },
-      tile('Recording studio', `${recordedTotal} of ${app.data.sounds.length} sounds recorded`, () => app.go('studio'), 'open-studio'),
+      tile('Recording studio', `${recordedTotal} of ${app.data.sounds.length} sounds recorded${wordsRecordedText(app)}`, () => app.go('studio'), 'open-studio'),
+      tile('Learning path', 'Where your child is on the whole journey', () => app.go('path'), 'open-path'),
       tile('Tracker', 'Practice days, sessions, accuracy, mix-ups', () => app.go('tracker'), 'open-tracker'),
       tile('Progress', 'Per sound, per stage, and readiness', () => app.go('progress'), 'open-progress'),
-      tile('Settings and backup', 'Word speech, session length, export and import', () => app.go('settings'), 'open-settings')),
+      tile('Settings and backup', 'Word speech, session length, ready to blend, export and import', () => app.go('settings'), 'open-settings')),
     h('div', { class: 'p-actions' },
       h('button', { class: 'p-btn primary', type: 'button', 'data-testid': 'back-to-child', onclick: () => app.go('home') }, 'Back to the child screen')),
     syncCard(app, 'menu'),
@@ -233,6 +263,13 @@ export function menu(app) {
 }
 
 /* ---------- recording studio ---------- */
+
+function wordsRecordedText(app) {
+  const words = (app.reading && app.reading.data && app.reading.data.words) || [];
+  if (!words.length) return '';
+  const n = words.filter((w) => app.recordings.has(`w:${w.word}`)).length;
+  return n ? `, ${n} word${n === 1 ? '' : 's'}` : '';
+}
 
 const MIC_HELP = {
   denied: 'Microphone access is blocked, so nothing can be recorded. On iPad open Settings, then Apps, then Safari, then Microphone, and choose Ask or Allow. Then come back and tap Record again. (In Safari you can also tap the aA button in the address bar, then Website Settings, then Microphone.)',
@@ -247,8 +284,9 @@ const MODE_TAG = { start: 'start', end: 'end', anywhere: 'anywhere', none: 'not 
 
 export function studio(app, opts = {}) {
   const groups = groupProgress(app.data, app.recorded());
-  let group = opts.group ?? (groups.find((g) => g.recorded < g.total) || groups[0]).group;
-  let selected = opts.sound || null;
+  let group = opts.group ?? (groups.find((g) => g.recorded < g.total) || groups[0]).group; // a group number, or 'words'
+  let selected = opts.sound || null; // a sound id, or a word id ("w:mat") on the Words tab
+  let showAllWords = false;
   let state = 'idle'; // idle | starting | recording | saving
   let message = null;
   let micError = audio.recordingSupport() === 'ok' ? null : audio.recordingSupport();
@@ -256,8 +294,55 @@ export function studio(app, opts = {}) {
   let autoStop = null;
   const eligible = targetEligibleIds(app.data);
   const words = new Map(app.data.words.map((w) => [w.word, w]));
+  const reading = app.reading && app.reading.data;
+  const wordById = new Map(((reading && reading.words) || []).map((w) => [`w:${w.word}`, w]));
+  const soundG = (id) => (app.data.sounds.find((x) => x.id === id) || { graphemes: [id] }).graphemes[0];
+
+  function recordButtons(rec, idleLabel = 'Record') {
+    const busy = state !== 'idle';
+    const recordLabel = state === 'recording' ? 'Stop' : state === 'starting' ? 'Starting…' : state === 'saving' ? 'Saving…' : rec ? 'Re-record' : idleLabel;
+    return [
+      micError ? notice('error', h('strong', {}, 'Microphone problem. '), MIC_HELP[micError] || MIC_HELP.error) : null,
+      h('div', { class: 'st-buttons' },
+        h('button', {
+          class: `p-btn rec${state === 'recording' ? ' recording' : ''}`, type: 'button', 'data-testid': 'record',
+          disabled: state === 'starting' || state === 'saving' || micError === 'unsupported' || micError === 'insecure',
+          onclick: () => (state === 'recording' ? stop() : start()),
+        }, h('span', { class: 'rec-dot', 'aria-hidden': 'true' }), recordLabel),
+        h('button', {
+          class: 'p-btn', type: 'button', 'data-testid': 'playback', disabled: !rec || busy,
+          onclick: () => { audio.unlock(); audio.playRecording(rec); },
+        }, '▶ Play')),
+    ];
+  }
+
+  function savedLine(rec) {
+    return rec ? h('p', { class: 'st-meta' }, rec.trimmed ? `Saved, ${(rec.durationMs / 1000).toFixed(1)} s after trimming silence.` : 'Saved (silence could not be trimmed on this device).') : null;
+  }
+
+  function tabsEl(gp) {
+    const busy = state !== 'idle';
+    const wordTab = reading ? (() => {
+      const all = [...wordById.keys()];
+      const done = all.filter((id) => app.recordings.has(id)).length;
+      return h('button', {
+        class: `p-tab p-tab-words${group === 'words' ? ' on' : ''}`, type: 'button', role: 'tab', 'data-testid': 'words-tab',
+        'aria-selected': group === 'words' ? 'true' : 'false', 'data-group': 'words', disabled: busy,
+        onclick: () => { group = 'words'; selected = null; message = null; render(); },
+      }, h('span', {}, 'Words'), h('small', {}, `${done}/${all.length}`));
+    })() : null;
+    return h('div', { class: 'p-tabs', role: 'tablist' }, gp.map((g) => h('button', {
+      class: `p-tab${g.group === group ? ' on' : ''}${g.recorded === g.total ? ' complete' : ''}`, type: 'button', role: 'tab',
+      'aria-selected': g.group === group ? 'true' : 'false', 'data-group': String(g.group), disabled: busy,
+      onclick: () => { group = g.group; selected = null; message = null; render(); },
+    }, h('span', {}, `Group ${g.group}`), h('small', {}, `${g.recorded}/${g.total}`))), wordTab);
+  }
+
+  function back() { return { label: 'Parent area', go: () => { cleanup(); app.go('parentMenu'); } }; }
 
   function render() {
+    if (group === 'words' && reading) { renderWords(); return; }
+    if (group === 'words') group = groups[0].group;
     const gp = groupProgress(app.data, app.recorded());
     const open = unlockedGroups(app.data, app.recorded(), app.progress);
     const cur = gp.find((g) => g.group === group);
@@ -268,12 +353,6 @@ export function studio(app, opts = {}) {
     const rec = app.recordings.get(sound.id);
     const ex = words.get(sound.exampleWord);
     const busy = state !== 'idle';
-
-    const tabs = h('div', { class: 'p-tabs', role: 'tablist' }, gp.map((g) => h('button', {
-      class: `p-tab${g.group === group ? ' on' : ''}${g.recorded === g.total ? ' complete' : ''}`, type: 'button', role: 'tab',
-      'aria-selected': g.group === group ? 'true' : 'false', 'data-group': String(g.group), disabled: busy,
-      onclick: () => { group = g.group; selected = null; message = null; render(); },
-    }, h('span', {}, `Group ${g.group}`), h('small', {}, `${g.recorded}/${g.total}`))));
 
     const groupNote = cur.group === gp[0].group
       ? (cur.recorded === cur.total ? 'Group 1 is recorded: your child can play.' : 'Record every sound in this group to start playing.')
@@ -289,7 +368,6 @@ export function studio(app, opts = {}) {
     h('span', { class: `st-mode-tag mode-${soundModes(app.data).get(s.id).mode || 'none'}` }, MODE_TAG[soundModes(app.data).get(s.id).mode || 'none']),
     app.recordings.has(s.id) ? h('span', { class: 'st-check', 'aria-hidden': 'true' }, '✓') : null)));
 
-    const recordLabel = state === 'recording' ? 'Stop' : state === 'starting' ? 'Starting…' : state === 'saving' ? 'Saving…' : rec ? 'Re-record' : 'Record';
     const detail = h('div', { class: 'st-detail', 'data-testid': 'detail', 'data-sound': sound.id },
       h('div', { class: 'st-big' }, sound.graphemes.join(' ')),
       h('p', { class: 'st-sayline' }, 'Say: ', h('strong', {}, sound.say)),
@@ -297,31 +375,82 @@ export function studio(app, opts = {}) {
       h('p', { class: 'st-example' }, ex ? h('span', { class: 'st-ex-emoji' }, ex.emoji) : null, ' as in ', h('strong', {}, sound.exampleWord)),
       h('p', { class: eligible.has(sound.id) ? 'st-mode' : 'st-note', 'data-testid': 'studio-mode', 'data-mode': soundModes(app.data).get(sound.id).mode || 'none' },
         modeLine(app.data, sound.id)),
-      micError ? notice('error', h('strong', {}, 'Microphone problem. '), MIC_HELP[micError] || MIC_HELP.error) : null,
-      h('div', { class: 'st-buttons' },
-        h('button', {
-          class: `p-btn rec${state === 'recording' ? ' recording' : ''}`, type: 'button', 'data-testid': 'record',
-          disabled: state === 'starting' || state === 'saving' || micError === 'unsupported' || micError === 'insecure',
-          onclick: () => (state === 'recording' ? stop() : start(sound)),
-        }, h('span', { class: 'rec-dot', 'aria-hidden': 'true' }), recordLabel),
-        h('button', {
-          class: 'p-btn', type: 'button', 'data-testid': 'playback', disabled: !rec || busy,
-          onclick: () => { audio.unlock(); audio.playRecording(rec); },
-        }, '▶ Play')),
+      ...recordButtons(rec),
       state === 'recording' ? h('p', { class: 'st-hint' }, 'Recording… say the sound once, then tap Stop.') : null,
       message ? h('p', { class: `st-msg ${message.kind}`, 'data-testid': 'studio-msg' }, message.text) : null,
-      rec ? h('p', { class: 'st-meta' }, rec.trimmed ? `Saved, ${(rec.durationMs / 1000).toFixed(1)} s after trimming silence.` : 'Saved (silence could not be trimmed on this device).') : null);
+      savedLine(rec));
 
     const after = canPlay(app.data, app.recorded(), app.progress)
       ? h('div', { class: 'p-actions' }, h('button', { class: 'p-btn primary', type: 'button', 'data-testid': 'go-play', disabled: busy, onclick: () => app.go('home') }, 'Go to the child screen'))
       : null;
 
-    page('studio', 'Recording studio', { back: { label: 'Parent area', go: () => { cleanup(); app.go('parentMenu'); } } },
+    page('studio', 'Recording studio', { back: back() },
       ...storageNotices(app),
-      tabs,
+      tabsEl(gp),
       h('p', { class: 'p-sub', 'data-testid': 'group-note' }, groupNote),
       h('div', { class: 'st-grid' }, tiles, detail),
       after);
+  }
+
+  /** The Words tab: the next words to record (their sounds all solid in See it), or every word. */
+  function renderWords() {
+    const gp = groupProgress(app.data, app.recorded());
+    const list = wordsToRecord(reading, app.progress, app.recorded(), 5);
+    const shown = showAllWords ? list.all : list.next;
+    if (!selected || !wordById.has(selected) || (!showAllWords && !shown.some((w) => w.id === selected) && !app.recordings.has(selected))) {
+      selected = shown.length ? shown[0].id : null;
+    }
+    const busy = state !== 'idle';
+    const ready = new Set(list.ready.map((w) => w.id));
+    const row = (w) => {
+      const need = unsolidSounds(w, app.progress);
+      return h('button', {
+        class: `st-word${w.id === selected ? ' on' : ''}${app.recordings.has(w.id) ? ' done' : ''}${ready.has(w.id) ? '' : ' waiting'}`, type: 'button',
+        'data-word': w.word, disabled: busy, 'aria-label': `${w.word}${app.recordings.has(w.id) ? ', recorded' : ''}`,
+        onclick: () => { selected = w.id; message = null; render(); },
+      }, h('span', { class: 'st-word-text' }, w.word),
+      h('span', { class: 'st-word-meta' }, ready.has(w.id) ? `level ${w.level}${w.emoji ? ` ${w.emoji}` : ''}` : `needs ${need.map(soundG).join(', ')} in See it`),
+      app.recordings.has(w.id) ? h('span', { class: 'st-check', 'aria-hidden': 'true' }, '✓') : null);
+    };
+    const levelsEl = showAllWords
+      ? [1, 2, 3, 4].map((lv) => {
+        const ws = list.all.filter((w) => w.level === lv);
+        return ws.length ? h('div', { class: 'st-level' }, h('h3', {}, `Level ${lv}`), h('div', { class: 'st-words' }, ws.map(row))) : null;
+      })
+      : [h('div', { class: 'st-words', 'data-testid': 'next-words' }, shown.map(row))];
+    const summary = list.ready.length
+      ? `${list.ready.length} word${list.ready.length === 1 ? ' is' : 's are'} ready to record (all their sounds are solid in See it); ${list.todo.length} still to record.`
+      : 'No words are ready yet: a word comes here once all its sounds are solid in See it. You can still record words ahead of time from the full list.';
+    const toggle = h('button', {
+      class: 'p-btn', type: 'button', 'data-testid': 'show-all-words', disabled: busy,
+      onclick: () => { showAllWords = !showAllWords; message = null; render(); },
+    }, showAllWords ? 'Show only the next words' : `Show all ${list.all.length} words`);
+
+    let detail;
+    if (!selected) {
+      detail = h('div', { class: 'st-detail', 'data-testid': 'detail' },
+        h('p', {}, list.ready.length ? 'Every ready word is recorded. New words arrive here as more sounds become solid in See it.' : 'Nothing to record here yet.'));
+    } else {
+      const w = wordById.get(selected);
+      const entry = { ...w, id: selected };
+      const rec = app.recordings.get(selected);
+      detail = h('div', { class: 'st-detail', 'data-testid': 'detail', 'data-word': w.word },
+        h('div', { class: 'st-big st-big-word' }, w.word),
+        h('p', { class: 'st-sayline', 'data-testid': 'word-instruction' }, 'Say it stretched, with no pauses: ', h('strong', { 'data-testid': 'stretched' }, stretched(entry, app.data)), '.'),
+        h('p', { class: 'st-tip' }, 'Hold the sounds you can hold; keep the quick ones (t, p, b...) short and joined on. Every letter keeps its own sound.'),
+        !ready.has(selected) ? h('p', { class: 'st-note' }, `Your child will meet this word once ${listOf(unsolidSounds(w, app.progress).map(soundG))} ${unsolidSounds(w, app.progress).length === 1 ? 'is' : 'are'} solid in See it.`) : null,
+        ...recordButtons(rec),
+        state === 'recording' ? h('p', { class: 'st-hint' }, 'Recording… say the word stretched once, then tap Stop.') : null,
+        message ? h('p', { class: `st-msg ${message.kind}`, 'data-testid': 'studio-msg' }, message.text) : null,
+        savedLine(rec));
+    }
+    page('studio', 'Recording studio', { back: back() },
+      ...storageNotices(app),
+      tabsEl(gp),
+      h('p', { class: 'p-sub', 'data-testid': 'group-note' }, summary),
+      h('div', { class: 'st-grid st-grid-words' },
+        h('div', {}, ...levelsEl, h('div', { class: 'p-actions' }, toggle)),
+        detail));
   }
 
   function cleanup() {
@@ -329,7 +458,7 @@ export function studio(app, opts = {}) {
     if (active) { active.stop().catch(() => {}); active = null; }
   }
 
-  async function start(sound) {
+  async function start() {
     audio.unlock();
     audio.stop();
     state = 'starting';
@@ -340,7 +469,8 @@ export function studio(app, opts = {}) {
       micError = null;
       state = 'recording';
       render();
-      autoStop = setTimeout(() => { if (state === 'recording') stop(); }, 4000);
+      // A stretched word takes longer than a sound.
+      autoStop = setTimeout(() => { if (state === 'recording') stop(); }, String(selected).startsWith('w:') ? 7000 : 4000);
     } catch (e) {
       active = null;
       state = 'idle';
@@ -356,6 +486,7 @@ export function studio(app, opts = {}) {
     state = 'saving';
     render();
     const id = selected;
+    const isWord = String(id).startsWith('w:');
     try {
       const raw = await active.stop();
       active = null;
@@ -371,15 +502,19 @@ export function studio(app, opts = {}) {
       audio.forget(id);
       app.sync?.changed('recording'); // uploaded straight away (in the background)
       state = 'idle';
-      const g = app.data.sounds.find((s) => s.id === id).graphemes[0];
+      const g = isWord ? id.slice(2) : app.data.sounds.find((s) => s.id === id).graphemes[0];
       if (processed.silent) {
         message = { kind: 'warn', text: `"${g}" was very quiet. Listen, and re-record closer to the microphone if needed.` };
       } else {
-        message = { kind: 'good', text: `Saved "${g}" and playing it back.${wasNew ? ' Tap its tile to re-record.' : ''}` };
-        // After a first recording, move on to the next unrecorded sound in this group.
-        if (wasNew) {
+        message = { kind: 'good', text: `Saved "${g}" and playing it back.${wasNew ? (isWord ? ' To re-record it later, use "Show all words".' : ' Tap its tile to re-record.') : ''}` };
+        // After a first recording, move on to the next unrecorded sound in this group (or word).
+        if (wasNew && !isWord) {
           const nextUp = groupProgress(app.data, app.recorded()).find((x) => x.group === group).sounds.find((s) => !app.recordings.has(s.id));
           if (nextUp) selected = nextUp.id;
+        } else if (wasNew && isWord) {
+          const list = wordsToRecord(reading, app.progress, app.recorded(), 5);
+          const pool = showAllWords ? list.all.filter((w) => !app.recordings.has(w.id)) : list.next;
+          if (pool.length) selected = pool[0].id;
         }
       }
       render();
@@ -394,6 +529,8 @@ export function studio(app, opts = {}) {
 
   render();
 }
+
+const listOf = (a) => (a.length <= 1 ? a.join('') : `${a.slice(0, -1).join(', ')} and ${a[a.length - 1]}`);
 
 /* ---------- progress ---------- */
 
@@ -419,7 +556,7 @@ export function progressView(app) {
   page('progress', 'Progress', { back: { label: 'Parent area', go: () => app.go('parentMenu') } },
     h('p', { class: 'p-sub' }, 'A sound is solid when at least 5 of its last 6 rounds were right first time, across at least 2 different days. "See it" opens for a sound once it is solid in "Hear it".'),
     h('p', { class: 'p-sub' }, `Mode is where the sound is in the picture word your child looks for: at the start when at least ${MIN_WORDS_FOR_MODE} picture words start with it, otherwise at the end, otherwise anywhere in the word. It is worked out from the word list.`),
-    passed >= 3 ? notice('good', `Passed the readiness check on ${passed} different days: your child may be ready for blending (a later version).`) : null,
+    passed >= READINESS_DAYS_NEEDED ? notice('good', `Passed the readiness check on ${passed} different days: your child is ready to blend, so reading is open (see the Learning path).`) : null,
     h('h2', {}, 'Sounds'),
     table,
     h('h2', {}, 'Readiness check'),
@@ -429,10 +566,47 @@ export function progressView(app) {
         h('tbody', {}, byDate.flatMap((d) => d.list.map((r) => h('tr', {},
           h('td', {}, r.d), h('td', {}, r.asked), h('td', {}, r.chose), h('td', {}, r.correct ? 'right order' : 'other order'))))))
       : h('p', { class: 'p-muted' }, 'Not tried yet. It appears as an occasional bonus round (at most once a day) once group 1 is solid in "See it".'),
-    h('p', { class: 'p-muted' }, `Days with a right answer: ${passed} of the 3 needed.`));
+    h('p', { class: 'p-muted' }, `Days with a right answer: ${passed} of the ${READINESS_DAYS_NEEDED} needed.`));
 }
 
 /* ---------- settings and backup ---------- */
+
+/**
+ * The parent's override: "your child is ready to blend". Turning it on asks for a confirmation that
+ * explains the readiness check; turning it off is immediate. It syncs (last change wins).
+ */
+function blendCard(app) {
+  const box = h('div', {});
+  const br = blendReady(app.readiness, app.blendOverride);
+  const set = async (on) => {
+    app.blendOverride = { on, at: Date.now() };
+    await app.save('blend');
+    app.go('settings');
+  };
+  const input = h('input', {
+    type: 'checkbox', checked: br.byOverride, 'data-testid': 'blend-override',
+    onchange: (e) => {
+      if (!e.target.checked) { set(false); return; }
+      e.target.checked = false; // only once confirmed
+      box.replaceChildren(
+        notice('info',
+          h('p', {}, `Reading (blending sounds into words) normally starts once your child has passed the readiness check on ${READINESS_DAYS_NEEDED} separate days. The check is a bonus round, at most once a day: your child sees two pictures, hears them said together as one word, and picks the order that matches (${br.days} of ${READINESS_DAYS_NEEDED} days so far).`),
+          h('p', {}, 'Turn this on if you are sure your child can already hear how sounds join up, for example if they can tell you that "mmmaaat" is mat. Words still only appear once their sounds are solid in See it and you have recorded them. You can turn it off again at any time.')),
+        h('div', { class: 'p-actions' },
+          h('button', { class: 'p-btn primary', type: 'button', 'data-testid': 'confirm-blend', onclick: () => set(true) }, 'Yes, my child is ready to blend'),
+          h('button', { class: 'p-btn', type: 'button', 'data-testid': 'cancel-blend', onclick: () => box.replaceChildren() }, 'Cancel')));
+      box.querySelector('[data-testid="confirm-blend"]')?.focus();
+    },
+  });
+  return h('div', { class: 'p-card', 'data-testid': 'blend-card' },
+    h('h2', {}, 'Reading'),
+    br.byCheck
+      ? notice('good', `Your child passed the readiness check on ${br.days} different days, so reading is open.`)
+      : null,
+    h('label', { class: 'p-row' }, input, h('span', {}, 'Your child is ready to blend', h('br'), h('small', { class: 'p-muted' }, 'Opens reading (stage 3) without waiting for the readiness check.'))),
+    box,
+    readingNote(app));
+}
 
 function importControl(app) {
   const status = h('p', { class: 'p-sub', 'data-testid': 'import-status' });
@@ -476,13 +650,13 @@ export function settings(app) {
   const exportStatus = h('p', { class: 'p-sub', 'data-testid': 'export-status' });
 
   const askReset = () => resetBox.replaceChildren(
-    notice('warn', 'This erases all progress, readiness results and the Tracker\'s session history. Your recordings and settings are kept.'),
+    notice('warn', 'This erases all progress (sounds and words), readiness results and the Tracker\'s session history. Your recordings, settings and the "ready to blend" switch are kept.'),
     h('div', { class: 'p-actions' },
       h('button', {
         class: 'p-btn danger', type: 'button', 'data-testid': 'confirm-reset',
         onclick: async () => {
           await app.store.resetProgress();
-          app.progress = { s1: {}, s2: {} };
+          app.progress = { s1: {}, s2: {}, s3: {} };
           app.readiness = [];
           app.sessions = [];
           app.meta.resetAt = Date.now(); // synced devices drop everything played before this
@@ -523,10 +697,12 @@ export function settings(app) {
       h('label', { class: 'p-row' },
         h('span', {}, 'Rounds per session'),
         h('input', {
-          type: 'range', min: '4', max: '10', step: '1', value: String(app.settings.roundsPerSession), 'data-testid': 'rounds',
+          type: 'range', min: String(ROUNDS_MIN), max: String(ROUNDS_MAX), step: '1', value: String(app.settings.roundsPerSession), 'data-testid': 'rounds',
           oninput: (e) => { app.settings.roundsPerSession = Number(e.target.value); roundsOut.textContent = e.target.value; save(); },
         }),
-        roundsOut)),
+        roundsOut),
+      h('p', { class: 'p-muted' }, 'About 3 to 5 minutes is plenty at this age. Once reading has started, every third round is a reading round.')),
+    blendCard(app),
     TV ? null : h('div', { class: 'p-card' }, // no backups on the TV: they are made on the iPad or laptop
       h('h2', {}, 'Backup'),
       h('p', {}, 'One file with all recordings, progress and settings. Keep it somewhere safe or use it to move to another device.'),

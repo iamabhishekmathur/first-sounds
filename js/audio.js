@@ -127,10 +127,20 @@ export function stop() {
   if (current) { try { current.stop(); } catch { /* already stopped */ } current = null; }
 }
 
-/** Play a stored recording { id, data, mime, updatedAt }. Resolves when playback ends. */
-export async function playRecording(rec) {
+/**
+ * Play a stored recording { id, data, mime, updatedAt }. Resolves when playback ends.
+ * onStart(durationMs) is called once the sound really starts (for the reading lights), with the
+ * decoded length, or the stored durationMs when it cannot be decoded.
+ */
+export async function playRecording(rec, { onStart } = {}) {
   if (!rec) return;
   log({ type: 'sound', id: rec.id });
+  let started = false;
+  const begin = (ms) => {
+    if (started || !onStart) return;
+    started = true;
+    try { onStart(Number.isFinite(ms) && ms > 0 ? ms : (rec.durationMs || 1500)); } catch { /* the lights are optional */ }
+  };
   stop();
   const c = context();
   if (c) {
@@ -147,6 +157,7 @@ export async function playRecording(rec) {
       current = src;
       const ended = new Promise((resolve) => { src.onended = resolve; });
       src.start();
+      begin(entry.buffer.duration * 1000);
       await ended;
       if (current === src) current = null;
       return;
@@ -154,7 +165,7 @@ export async function playRecording(rec) {
   }
   const url = URL.createObjectURL(new Blob([rec.data], { type: rec.mime }));
   const el = new Audio(url);
-  try { await el.play(); await new Promise((r) => { el.onended = r; el.onerror = r; }); } catch { /* ignore */ }
+  try { await el.play(); begin(el.duration * 1000); await new Promise((r) => { el.onended = r; el.onerror = r; }); } catch { begin(rec.durationMs); }
   URL.revokeObjectURL(url);
 }
 
@@ -184,11 +195,18 @@ export function tone(kind = 'happy') {
 
 /* ---------- whole words only ---------- */
 
+/** Can a whole word be spoken here (the TV bridge, or the Web Speech API)? */
+export function canSpeak() {
+  const bridge = globalThis.FirstSoundsTV;
+  if (bridge && typeof bridge.speak === 'function') return true;
+  return !!(globalThis.speechSynthesis && globalThis.SpeechSynthesisUtterance);
+}
+
 /**
  * Whole-word speech: the TV wrapper's bridge (Android WebView has no speechSynthesis) if present,
  * else the Web Speech API, else nothing (speech is optional and never throws).
  */
-export function speakWord(word, enabled = true) {
+export function speakWord(word, enabled = true, { rate = 0.8 } = {}) {
   if (!enabled) return;
   const bridge = globalThis.FirstSoundsTV;
   if (bridge && typeof bridge.speak === 'function') {
@@ -202,7 +220,7 @@ export function speakWord(word, enabled = true) {
   try {
     ss.cancel();
     const u = new SpeechSynthesisUtterance(word);
-    u.rate = 0.8;
+    u.rate = rate;
     u.lang = 'en';
     ss.speak(u);
   } catch { /* speech is optional */ }

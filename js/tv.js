@@ -188,7 +188,7 @@ export function back(app) {
     return true;
   }
   if (app.screen === 'home') return false;
-  if (app.screen === 'tracker' || app.screen === 'progress' || app.screen === 'settings') app.go('parentMenu');
+  if (['tracker', 'progress', 'settings', 'path'].includes(app.screen)) app.go('parentMenu');
   else app.go('home');
   return true;
 }

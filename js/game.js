@@ -1,4 +1,5 @@
 // Child screens: home, the "Hear it" / "See it" rounds, the readiness bonus round, and "all done".
+// Once stage 3 is unlocked, every third round is a reading round (js/read-round.js).
 // Nothing on these screens needs reading; the one line of small text is a prompt for the parent.
 
 import { h, mount, setMode, holdGate, icon } from './ui.js';
@@ -6,6 +7,8 @@ import { planRound, recordRound, readinessEligible, planReadiness, canPlay } fro
 import * as audio from './audio.js';
 import { newId, MAX_WRONG_TAPS } from './syncdoc.js';
 import { TV } from './tv.js';
+import { readingUnlock, readingSlots, planReading, READ_STAGE } from './reading.js';
+import { renderReading } from './read-round.js';
 
 const RESOLVE_DELAY = 2200;
 const TAP = TV ? 'choose' : 'tap'; // the parent prompt's verb: the TV has a remote, not a touch screen
@@ -13,11 +16,20 @@ const TAP = TV ? 'choose' : 'tap'; // the parent prompt's verb: the TV has a rem
 /** How the parent prompt names each position mode ("…tap the picture that <phrase>."). */
 export const POSITION_PHRASE = { start: 'starts with this sound', end: 'ends with this sound', anywhere: 'has this sound in it' };
 
+/** Stage 3 for this app's state: { unlocked, ready, available, ... } (js/reading.js). */
+export function readingState(app) {
+  return readingUnlock({
+    reading: app.reading && app.reading.data, progress: app.progress, recorded: app.recorded(),
+    readiness: app.readiness, override: app.blendOverride,
+  });
+}
+
 /** Adds a played round to the session record and saves the record into app.sessions. */
-function noteSessionRound(app, s, stage, firstTry, t) {
+function noteSessionRound(app, s, stage, firstTry, t, practised = false) {
   const r = s.record;
   r.rounds += 1;
   if (firstTry) r.correct += 1;
+  if (practised) r.practised = (r.practised || 0) + 1;
   r.end = Math.max(r.start, t);
   if (!r.stages.includes(stage)) r.stages = [...r.stages, stage].sort();
   const copy = { ...r, stages: [...r.stages] };
@@ -71,7 +83,10 @@ export function startSession(app) {
   // This runs inside the tap, which is what unlocks audio and speech on iPad Safari.
   audio.unlock();
   const total = app.settings.roundsPerSession;
-  const s = { total, done: 0, lastId: null, lastWord: null, newCount: { 1: 0, 2: 0 }, readinessDone: false, readinessAt: Math.floor(total / 2) };
+  const s = {
+    total, done: 0, lastId: null, lastWord: null, lastWordId: null, newCount: { 1: 0, 2: 0, 3: 0 },
+    readinessDone: false, readinessAt: Math.floor(total / 2), readSlots: readingSlots(total),
+  };
   // The session record for the parent's Tracker. Saved from its first played round on, and updated
   // after every round; it rides along with the round's (debounced) progress push.
   const now = Date.now();
@@ -89,6 +104,29 @@ function next(app, s) {
     s.readinessDone = true;
     if (readinessEligible({ data: app.data, recorded: app.recorded(), progress: app.progress, results: app.readiness, today: app.today() })) {
       readiness(app, s);
+      return;
+    }
+  }
+  if (s.readSlots.has(s.done) && readingState(app).unlocked) {
+    const plan = planReading({
+      reading: app.reading.data, progress: app.progress, recorded: app.recorded(), rng: app.rng,
+      newThisSession: s.newCount[3], lastId: s.lastWordId,
+    });
+    if (plan) {
+      if (plan.reason === 'new') s.newCount[3] += 1;
+      s.lastWordId = plan.word.id;
+      renderReading(app, s, plan, {
+        alive: () => alive(app, s),
+        topbar: () => topbar(app, s),
+        next: () => next(app, s),
+        noteRound: (firstTry, t, practised) => {
+          noteSessionRound(app, s, READ_STAGE, firstTry, t, practised);
+          app.save('progress');
+          app.save('sessions');
+          s.done += 1;
+          document.querySelectorAll('#app .dot').forEach((d, i) => d.classList.toggle('on', i < s.done));
+        },
+      });
       return;
     }
   }

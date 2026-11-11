@@ -1,19 +1,21 @@
 // Boot, shared state and navigation.
-// Test hooks (URL parameters): ?data=<path to sounds json> ?today=YYYY-MM-DD ?seed=<int> ?db=<IndexedDB name>
+// Test hooks (URL parameters): ?data=<path to sounds json> ?reading=<path to reading json> ?today=YYYY-MM-DD ?seed=<int> ?db=<IndexedDB name>
 // ?syncRetry=<ms> ?syncDebounce=<ms> (see js/sync.js)
 
 import { loadData } from './data.js';
+import { loadReading } from './reading.js';
 import { openStorage } from './storage.js';
 import { createSync } from './sync.js';
-import { withIds } from './syncdoc.js';
+import { withIds, cleanSettings, isWordId, ROUNDS_DEFAULT } from './syncdoc.js';
 import { dayKey, mulberry32 } from './logic.js';
 import * as audio from './audio.js';
 import * as game from './game.js';
 import * as parent from './parent.js';
 import * as tracker from './tracker-view.js';
+import * as path from './course-view.js';
 import * as tv from './tv.js';
 
-export const DEFAULT_SETTINGS = { speakWords: true, roundsPerSession: 6 };
+export const DEFAULT_SETTINGS = { speakWords: true, roundsPerSession: ROUNDS_DEFAULT };
 
 globalThis.__fsLog = [];
 const params = new URLSearchParams(location.search);
@@ -26,6 +28,7 @@ const screens = {
   progress: parent.progressView,
   settings: parent.settings,
   tracker: tracker.trackerView,
+  path: path.pathView,
   home: game.home,
 };
 
@@ -33,10 +36,12 @@ const app = {
   params,
   data: null,
   report: null,
+  reading: null, // { data, report } from data/reading.json, or { data: null, report } when missing or invalid
   store: null,
   settings: { ...DEFAULT_SETTINGS },
-  progress: { s1: {}, s2: {} },
+  progress: { s1: {}, s2: {}, s3: {} },
   readiness: [],
+  blendOverride: null, // the parent's "ready to blend" switch: { on, at } (see js/syncdoc.js)
   sessions: [], // play sessions, for the parent's Tracker (see js/syncdoc.js)
   meta: { settingsAt: 0, resetAt: 0 }, // sync timestamps: last settings change, last progress reset
   recordings: new Map(),
@@ -54,7 +59,7 @@ const app = {
         this.meta.settingsAt = Date.now();
         await this.store.setKV('meta', this.meta);
       }
-      await this.store.setKV(key, this[key]);
+      await this.store.setKV(key, key === 'blend' ? this.blendOverride : this[key]);
       this.saveError = null;
     } catch (e) { this.saveError = e.message || String(e); }
     this.sync?.changed(key);
@@ -63,21 +68,26 @@ const app = {
   async loadState() {
     const s = this.store;
     const safe = async (fn, fallback) => { try { return (await fn()) ?? fallback; } catch { return fallback; } };
-    const settings = await safe(() => s.getKV('settings'), {});
-    this.settings = normaliseSettings(settings);
     const meta = await safe(() => s.getKV('meta'), {});
     this.meta = { settingsAt: Number(meta.settingsAt) || 0, resetAt: Number(meta.resetAt) || 0 };
+    const settings = await safe(() => s.getKV('settings'), {});
+    this.settings = normaliseSettings(settings, this.meta.settingsAt);
     const progress = await safe(() => s.getKV('progress'), {});
     const readiness = await safe(() => s.getKV('readiness'), []);
     // Every round and readiness result gets a stable id (in memory; saved with the next change).
-    const ided = withIds({ s1: progress.s1 || {}, s2: progress.s2 || {} }, readiness);
-    this.progress = { s1: ided.progress.s1, s2: ided.progress.s2 };
+    // Stores from before reading have no s3.
+    const ided = withIds({ s1: progress.s1 || {}, s2: progress.s2 || {}, s3: progress.s3 || {} }, readiness);
+    this.progress = { s1: ided.progress.s1, s2: ided.progress.s2, s3: ided.progress.s3 };
     this.readiness = ided.readiness;
     const sessions = await safe(() => s.getKV('sessions'), []);
     this.sessions = Array.isArray(sessions) ? sessions.filter((x) => x && typeof x.id === 'string') : [];
+    const blend = await safe(() => s.getKV('blend'), null);
+    this.blendOverride = blend && typeof blend === 'object' && Number.isFinite(Number(blend.at)) ? { on: !!blend.on, at: Number(blend.at) } : null;
+    // Sound recordings, and word recordings ("w:<word>") whether or not the word list loaded, so a
+    // missing data/reading.json never makes a device forget (or re-download) them.
     const ids = new Set(this.data.sounds.map((x) => x.id));
     const recs = await safe(() => s.allRecordings(), []);
-    this.recordings = new Map(recs.filter((r) => ids.has(r.id) && r.data).map((r) => [r.id, r]));
+    this.recordings = new Map(recs.filter((r) => (ids.has(r.id) || isWordId(r.id)) && r.data).map((r) => [r.id, r]));
   },
 
   go(name, opts) {
@@ -95,16 +105,13 @@ const app = {
   /** A sync brought new data. Only screens that are safe to redraw are refreshed. */
   onSynced() {
     if (this.session) return; // never interrupt the child mid-game
-    if (this.screen === 'home' || this.screen === 'parentMenu' || this.screen === 'progress' || this.screen === 'tracker') this.go(this.screen);
+    if (['home', 'parentMenu', 'progress', 'tracker', 'path'].includes(this.screen)) this.go(this.screen);
   },
 };
 
-export function normaliseSettings(s) {
-  const out = { ...DEFAULT_SETTINGS, ...(s && typeof s === 'object' ? s : {}) };
-  out.speakWords = out.speakWords !== false;
-  const n = Math.round(Number(out.roundsPerSession));
-  out.roundsPerSession = Number.isFinite(n) ? Math.min(10, Math.max(4, n)) : 6;
-  return out;
+/** Settings with defaults and limits (js/syncdoc.js): never changed (settingsAt 0) means the default rounds. */
+export function normaliseSettings(s, settingsAt = 0) {
+  return { ...DEFAULT_SETTINGS, ...(s && typeof s === 'object' ? s : {}), ...cleanSettings(s, settingsAt) };
 }
 
 function installGuards() {
@@ -138,6 +145,8 @@ async function boot() {
     document.body.dataset.ready = 'error';
     return;
   }
+  // The reading words (stage 3) are optional: missing or invalid, the app runs without stage 3.
+  app.reading = await loadReading(params.get('reading') || 'data/reading.json', app.data);
   app.store = await openStorage(params.get('db') || 'first-sounds');
   await app.loadState();
   app.sync = createSync(app, {
