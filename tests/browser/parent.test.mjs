@@ -216,7 +216,7 @@ test('reset progress asks for confirmation and keeps recordings', async () => {
   await page.tap('[data-testid="confirm-reset"]');
   await page.waitForSelector('.notice-good');
   st = await storedState(page);
-  assert.deepEqual(st.progress, { s1: {}, s2: {} });
+  assert.deepEqual(st.progress, { s1: {}, s2: {}, s3: {} });
   assert.deepEqual(st.readiness, []);
   assert.equal(st.recordings.length, 4);
   await context.close();

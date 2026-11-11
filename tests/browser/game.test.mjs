@@ -69,8 +69,8 @@ test('a full stage 1 session, with a wrong-then-right round, ends calmly', async
   await page.locator('.choice:not(.happy)').first().tap();
   await page.waitForFunction(() => !document.querySelector('.round.resolved'));
 
-  // Rounds 2-6 answered first time.
-  for (let i = 2; i <= 6; i++) {
+  // Rounds 2-10 answered first time (10 rounds is the default session length now).
+  for (let i = 2; i <= 10; i++) {
     const info = await answerRound(page);
     assert.ok(info, `round ${i} shown`);
     assert.equal(info.stage, '1');
@@ -84,9 +84,9 @@ test('a full stage 1 session, with a wrong-then-right round, ends calmly', async
 
   const st = await storedState(page);
   const all = Object.entries(st.progress.s1).flatMap(([id, h]) => h.map((r) => ({ id, ...r })));
-  assert.equal(all.length, 6, 'six rounds recorded');
+  assert.equal(all.length, 10, 'ten rounds recorded (the default)');
   assert.equal(st.progress.s1[target][0].c, 0, 'the wrong-then-right round does not count as correct');
-  assert.equal(all.filter((r) => r.c === 1).length, 5);
+  assert.equal(all.filter((r) => r.c === 1).length, 9);
   assert.ok(all.every((r) => r.d === '2026-11-10'), 'injected date used');
   assert.deepEqual(st.progress.s2, {});
 
@@ -185,7 +185,7 @@ test('readiness check: bonus round once group 1 is solid in stage 2, at most onc
   await open(page, url(env, { seed: 5, today }));
   await page.tap('[data-testid="play"]');
   assert.ok(await playUntilReadiness(page), 'readiness round appeared');
-  assert.equal(await page.locator('.dot.on').count(), 3, 'it comes half way through the session');
+  assert.equal(await page.locator('.dot.on').count(), 5, 'it comes half way through the session');
 
   // Phase 1: pair side by side, parent prompt.
   const prompt1 = await page.textContent('.prompt');
@@ -213,7 +213,7 @@ test('readiness check: bonus round once group 1 is solid in stage 2, at most onc
   let st = await storedState(page);
   assert.equal(st.readiness.length, 4);
   assert.deepEqual([st.readiness[3].d, st.readiness[3].correct, st.readiness[3].asked], [today, false, askedWord]);
-  assert.equal(await page.locator('.dot.on').count(), 3, 'bonus round does not use up a session round');
+  assert.equal(await page.locator('.dot.on').count(), 5, 'bonus round does not use up a session round');
 
   // Same day again: no second readiness round.
   await open(page, url(env, { seed: 5, today }));
@@ -233,7 +233,7 @@ test('readiness check: bonus round once group 1 is solid in stage 2, at most onc
   assert.equal(st.readiness.at(-1).correct, true);
 
   await page.evaluate(() => globalThis.__fsApp.go('parentMenu'));
-  assert.match(await page.textContent('.notice-good'), /3 different days.*ready for blending/);
+  assert.match(await page.textContent('.notice-good'), /3 different days.*Reading starts once a word is ready/);
   await page.tap('[data-testid="open-progress"]');
   const table = await page.textContent('[data-testid="readiness-table"]');
   for (const d of ['2026-11-07', '2026-11-08', '2026-11-09', '2026-11-10', '2026-11-11']) assert.ok(table.includes(d), d);

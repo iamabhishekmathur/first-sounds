@@ -286,7 +286,7 @@ test('a progress reset on one device reaches the others; recordings stay', async
   await waitFor(async () => { const x = await server(); return x && !x.progress.s1.m; }, 'reset on server');
   await b.page.evaluate(() => globalThis.__fsApp.sync.now());
   const st = await storedState(b.page);
-  assert.deepEqual(st.progress, { s1: {}, s2: {} });
+  assert.deepEqual(st.progress, { s1: {}, s2: {}, s3: {} });
   assert.equal(st.recordings.length, 4);
   await a.context.close();
   await b.context.close();

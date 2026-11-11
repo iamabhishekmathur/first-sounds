@@ -80,17 +80,64 @@ test('the app loads the real data by default and plays a session', { skip }, asy
   await open(page, href);
   assert.equal(await page.getAttribute('[data-screen]', 'data-screen'), 'welcome');
   await page.tap('[data-testid="start-recording"]');
-  assert.equal(await page.locator('.p-tab').count(), new Set(data.sounds.map((s) => s.group)).size);
+  assert.equal(await page.locator('.p-tab:not(.p-tab-words)').count(), new Set(data.sounds.map((s) => s.group)).size);
   assert.equal(await page.locator('.st-tile').count(), group1.length);
   await seed(page, { recordings: group1 });
   await open(page, href);
   await page.tap('[data-testid="play"]');
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 10; i++) {
     await page.waitForSelector('[data-screen="round"]');
     const info = await answerRound(page);
     assert.ok(group1.includes(info.target));
   }
   await page.waitForSelector('[data-screen="done"]');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+/* ---------- the real data/reading.json (written separately; skipped if absent) ---------- */
+
+const RFILE = new URL('../../data/reading.json', import.meta.url);
+const rskip = present && existsSync(RFILE) ? false : 'data/reading.json is not present';
+
+test('real data/reading.json passes the reading validator against the real sounds', { skip: rskip }, async () => {
+  const { validateReading } = await import('../../js/reading.js');
+  const sounds = JSON.parse(readFileSync(FILE, 'utf8'));
+  const r = validateReading(JSON.parse(readFileSync(RFILE, 'utf8')), sounds);
+  assert.deepEqual(r.errors, []);
+  const left = r.warnings.filter((w) => /left out/.test(w));
+  const levels = [1, 2, 3, 4].map((l) => r.words.filter((w) => w.level === l).length);
+  console.log(`# real reading: ${r.words.length} usable words (levels ${levels.join('/')}), ${r.words.filter((w) => w.emoji).length} with a picture, ${left.length} left out, ${r.warnings.length} warnings`);
+  for (const w of r.warnings) console.log(`#   ${w}`);
+});
+
+test('the app runs a reading round on the real word list', { skip: rskip }, async () => {
+  const sounds = JSON.parse(readFileSync(FILE, 'utf8'));
+  const group1 = sounds.sounds.filter((s) => s.group === 1).map((s) => s.id);
+  const days = ['2026-11-08', '2026-11-08', '2026-11-08', '2026-11-09', '2026-11-09', '2026-11-09'];
+  const solid = Object.fromEntries(['m', 'a', 't', ...group1].map((id) => [id, days.map((d) => ({ c: 1, d }))]));
+  const { page, errors, context } = await newPage(env);
+  const href = `${env.base}index.html?seed=3&today=2026-11-10`;
+  await open(page, href);
+  await seed(page, {
+    recordings: [...group1, 't', 'w:mat'], progress: { s1: solid, s2: solid }, blend: { on: true, at: 1 },
+    readiness: [{ id: 'r', d: '2026-11-10', pair: 'x', asked: 'x', chose: 'x', correct: true, at: 1 }], settings: { speakWords: true, roundsPerSession: 4 },
+  });
+  await open(page, href);
+  assert.equal(await page.evaluate(() => globalThis.__fsApp.reading.report.ok), true);
+  await page.tap('[data-testid="play"]');
+  for (let i = 0; i < 3; i++) {
+    await page.waitForSelector('[data-screen="round"]:not(.resolved)');
+    if (await page.getAttribute('[data-screen="round"]', 'data-stage') === '3') break;
+    await answerRound(page);
+  }
+  assert.equal(await page.getAttribute('[data-screen="round"]', 'data-word'), 'mat');
+  await page.tap('[data-testid="go"]');
+  await page.waitForSelector('[data-phase="blended"]', { timeout: 6000 });
+  await page.tap('[data-testid="say-fast"]');
+  await page.waitForSelector('[data-phase="done"]', { timeout: 5000 });
+  await page.evaluate(() => globalThis.__fsApp.go('parentMenu'));
+  assert.equal(await page.locator('[data-testid="reading-unavailable"]').count(), 0);
   assert.deepEqual(errors, []);
   await context.close();
 });

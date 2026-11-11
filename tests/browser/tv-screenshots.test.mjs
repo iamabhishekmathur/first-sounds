@@ -83,8 +83,7 @@ test('TV screenshots (1920x1080, keyboard only)', async () => {
   await page.keyboard.up('Enter');
   await shot(page, 'tv-12-parent-menu');
   await page.keyboard.press('ArrowUp');
-  await page.keyboard.press('ArrowRight');
-  await page.keyboard.press('ArrowRight');
+  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowRight'); // Learning path, Tracker, Progress, Settings
   await page.keyboard.press('Enter');
   await page.waitForSelector('[data-screen="settings"]');
   await shot(page, 'tv-13-settings');

@@ -6,13 +6,14 @@ const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 
 export const FIXTURE = 'tests/fixtures/sounds.sample.json';
+export const READING_FIXTURE = 'tests/fixtures/reading.sample.json';
 export const IPAD_LANDSCAPE = { width: 1180, height: 820 };
 
 export const FAMILY_CODE = 'panda-kettle-moon-38';
 
-/** Static server + fake sync API (family code FAMILY_CODE, sound ids from the fixture). */
+/** Static server + fake sync API (family code FAMILY_CODE, sound and word ids from the fixtures). */
 export async function setup() {
-  const { server, port, api } = await startServer(0, { familyCode: FAMILY_CODE, dataFile: FIXTURE });
+  const { server, port, api } = await startServer(0, { familyCode: FAMILY_CODE, dataFile: FIXTURE, readingFile: READING_FIXTURE });
   const browser = await chromium.launch({
     args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', '--autoplay-policy=user-gesture-required'],
   });
@@ -42,7 +43,7 @@ export async function newPage(env, { viewport = IPAD_LANDSCAPE, scale = 1, mic =
 }
 
 export function url(env, params = {}) {
-  const q = new URLSearchParams({ data: FIXTURE, ...params });
+  const q = new URLSearchParams({ data: FIXTURE, reading: READING_FIXTURE, ...params });
   return `${env.base}index.html?${q}`;
 }
 
@@ -51,21 +52,32 @@ export async function open(page, href) {
   await page.waitForFunction(() => document.body.dataset.ready);
 }
 
-/** Seed IndexedDB through the app's own storage module, then reload. */
-export async function seed(page, { recordings = [], progress, readiness, settings } = {}) {
-  await page.evaluate(async ({ recordings, progress, readiness, settings }) => {
+/**
+ * Seed IndexedDB through the app's own storage module, then reload. Settings are seeded as set by
+ * the parent (settingsAt now) unless settingsAt is given (0: never changed). Recording ids may be
+ * word ids ("w:mat"); words get a longer recording (durationMs: words).
+ */
+export async function seed(page, { recordings = [], progress, readiness, settings, settingsAt, blend, sessions, wordMs = 1800 } = {}) {
+  await page.evaluate(async ({ recordings, progress, readiness, settings, settingsAt, blend, sessions, wordMs }) => {
     const { encodeWav } = await import('./js/audio.js');
     const app = globalThis.__fsApp;
     for (const id of recordings) {
       const rate = 24000;
-      const s = new Float32Array(rate * 0.4);
+      const ms = id.startsWith('w:') ? wordMs : 400;
+      const s = new Float32Array(Math.round((rate * ms) / 1000));
       for (let i = 0; i < s.length; i++) s[i] = 0.3 * Math.sin((2 * Math.PI * 220 * i) / rate);
-      await app.store.putRecording({ id, data: encodeWav(s, rate), mime: 'audio/wav', durationMs: 400, trimmed: true, updatedAt: Date.now() });
+      await app.store.putRecording({ id, data: encodeWav(s, rate), mime: 'audio/wav', durationMs: ms, trimmed: true, updatedAt: Date.now() });
     }
     if (progress) await app.store.setKV('progress', progress);
     if (readiness) await app.store.setKV('readiness', readiness);
-    if (settings) await app.store.setKV('settings', settings);
-  }, { recordings, progress, readiness, settings });
+    if (sessions) await app.store.setKV('sessions', sessions);
+    if (blend) await app.store.setKV('blend', blend);
+    if (settings) {
+      await app.store.setKV('settings', settings);
+      const meta = (await app.store.getKV('meta')) || {};
+      await app.store.setKV('meta', { resetAt: 0, ...meta, settingsAt: settingsAt ?? Date.now() });
+    }
+  }, { recordings, progress, readiness, settings, settingsAt, blend, sessions, wordMs });
 }
 
 export async function storedState(page) {

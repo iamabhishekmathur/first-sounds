@@ -28,7 +28,7 @@ test('"ends with" and "has this sound" rounds, each with the right parent prompt
   const { page, errors, context } = await newPage(env);
   const params = { data: MODES_FIXTURE, seed: 3, today: '2026-11-10', syncDebounce: 100 };
   await open(page, url(env, params));
-  await seed(page, { recordings: MODES_G1, progress: { s1: { m: learning('2026-11-09'), s: learning('2026-11-09') }, s2: {} } });
+  await seed(page, { recordings: MODES_G1, progress: { s1: { m: learning('2026-11-09'), s: learning('2026-11-09') }, s2: {} }, settings: { speakWords: true, roundsPerSession: 6 } });
   await open(page, url(env, params));
   await page.tap('[data-testid="play"]');
   const seen = {};

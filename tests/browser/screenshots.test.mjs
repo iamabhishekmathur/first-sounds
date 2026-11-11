@@ -128,14 +128,14 @@ test('stage 2, readiness and done screens', async () => {
 
   const r = await freshWithRecordings(env, {}, { seed: 5, today: '2026-11-10' }, { progress: { s1: solid(GROUP1), s2: solid(GROUP1) } });
   await r.page.tap('[data-testid="play"]');
-  for (let i = 0; i < 3; i++) await answerRound(r.page);
+  for (let i = 0; i < 5; i++) await answerRound(r.page);
   await r.page.waitForSelector('[data-screen="readiness"]');
   await shot(r.page, '18-readiness-slide');
   await r.page.tap('.prompt-link');
   await r.page.waitForSelector('[data-phase="2"]');
   await shot(r.page, '19-readiness-which-one');
   await r.page.tap('.ready-row');
-  for (let i = 0; i < 3; i++) { await r.page.waitForSelector('[data-screen="round"]'); await answerRound(r.page); }
+  for (let i = 0; i < 5; i++) { await r.page.waitForSelector('[data-screen="round"]'); await answerRound(r.page); }
   await r.page.waitForSelector('[data-screen="done"]');
   await r.page.waitForTimeout(500);
   await shot(r.page, '20-all-done-first-3-seconds');
