@@ -102,6 +102,48 @@ or `screenshots/`) as a production deployment, either with `vercel deploy --prod
 Locally, `node tests/server.mjs` also serves a fake of the API (an in-memory store, using the same
 `api/_lib/core.js`). It accepts the code in `$FAMILY_CODE`, or `local-test-code-11` by default.
 
+## TV mode (Android TV / Google TV)
+
+The child's games also run on a television, played with the remote (D-pad, OK, Back). An Android TV
+app (a WebView wrapper, built separately) loads `https://first-sounds-two.vercel.app/?tv=1`.
+
+- **On** when the URL has `?tv=1` (remembered in `localStorage` on that device, so reloads inside the
+  wrapper stay in TV mode; `?tv=0` forgets it) or when the wrapper's bridge `window.FirstSoundsTV`
+  exists. The page then has `class="tv"` on `<html>`, and `js/tv.js` handles the keys.
+- **No microphone on the TV.** The parent records on the iPad or laptop; the TV gets the recordings
+  through sync. A TV's first run goes straight to "Enter your family code to load your recordings"
+  (never the recording welcome). Until group 1 has arrived, the child home screen shows a calm note
+  for the parent instead of the games. The recording studio and backup export/import are not on the
+  TV; the TV parent menu has code entry and sync status, Tracker (read-only, scrolls with the
+  remote), Progress, Settings, and a note that recording is done on the iPad or laptop.
+- **Remote:** arrows move focus between the big choices, the replay button and the gear; focus
+  stops at the edges and never lands on a hidden or disabled control. OK (Enter, NumpadEnter or
+  space) presses. Each round starts with focus on the first choice. Down from a picture reaches its
+  speaker badge, Up goes back. The readiness check's "slide a finger" step is "press OK". The focus
+  ring is thick and dark, with a small scale-up (no scale under `prefers-reduced-motion`). On parent
+  pages Up/Down also scroll when nothing to focus is near. In a text field Left/Right move the caret
+  and leave the field at its ends; OK on the empty code box is left to the TV's on-screen keyboard.
+- **Parent gate:** hold OK on the gear for 3 seconds (keydown with no keyup; a remote's repeated
+  keydowns are ignored). A mouse or touch hold also works (3 s on the TV, 2 s elsewhere).
+- **Back:** in the parent area, up a level (Tracker/Progress/Settings → parent menu → child home);
+  during a game (rounds, readiness), nothing; on "all done", back to the child home; on the child
+  home screen, not handled, so Android exits. In a browser in TV mode, `Escape` and `Backspace` (not
+  while typing in a field) do the same.
+- **Sound:** a key press unlocks audio like a tap does (the AudioContext is resumed on keydown).
+- **Layout:** for 1920×1080 and 1280×720 viewports seen from about 3 m: sizes in `vh` so both look
+  the same, 5% overscan-safe margins, no scrolling on child screens, no hover-only states, a larger
+  parent prompt line. Parent pages scroll inside the safe area, zoomed for the distance.
+- **Outside TV mode nothing changes** on the iPad: no TV layout, menu, gate timing or Back handling.
+  Only the arrow keys move focus on the child screens (useful on a laptop, harmless on a tablet).
+
+### Bridge contract (wrapper ⇄ page)
+
+| Name | Direction | Contract |
+| --- | --- | --- |
+| `window.FirstSoundsTV` | wrapper → page | Any object (for example an `addJavascriptInterface` object), present before the page's scripts run. Its presence turns TV mode on. |
+| `FirstSoundsTV.speak(text)` | wrapper → page, optional | Called with one whole word (a string) when word speech is on, in place of the Web Speech API (Android WebView has no `speechSynthesis`). Its return value is ignored and anything it throws is caught. Without it the page uses `speechSynthesis` if present, and otherwise skips speech silently. Isolated sounds are always the parent's recordings, never speech. |
+| `window.FirstSoundsTV_onBack()` | page → wrapper | Defined by the page in TV mode. The wrapper calls it when Back is pressed (for example `evaluateJavascript("FirstSoundsTV_onBack()", cb)`). Returns `true` when the page handled Back, `false` to let Android handle it (exit). Returns `false` while the app is still loading or showed a data error. If it is not defined yet (page not loaded), the wrapper should treat that as `false`. |
+
 ## The Tracker (parent area)
 
 Parent area > Tracker shows how practice is going. Every figure comes from pure functions in
@@ -160,10 +202,16 @@ status of its oldest kept rounds. A brand-new install shows an explanation inste
   recordings and progress, a recording uploaded straight away, a wrong code, offline then
   reconnecting, the server down, failed uploads retried by themselves, two devices playing offline at once, a reset, and backups.
 - `tests/browser/screenshots.test.mjs` writes every screen to `screenshots/`.
+- `tests/browser/tv.test.mjs`: TV mode with the keyboard only and no touch, at 1920×1080 and 1280×720:
+  first run to code entry, sync then a Hear it session (wrong then right) and a See it round, the
+  readiness check, focus never lost, the OK-hold gate (a short press does not open it), the TV parent
+  menu (no studio or export), the Tracker scrolling, Back on every screen, `FirstSoundsTV.speak`, no
+  `speechSynthesis`, and the iPad unchanged outside TV mode. `tests/unit/tv.test.mjs`: the mode switch
+  and the arrow-key targeting. `tests/browser/tv-screenshots.test.mjs` writes `screenshots/tv-*.png`.
 
 Test hooks are URL parameters: `?data=<path>` (data file), `?today=YYYY-MM-DD` (date used for
 mastery and readiness), `?seed=<n>` (repeatable randomness), `?db=<name>` (IndexedDB name),
-`?syncRetry=<ms>` and `?syncDebounce=<ms>` (sync timing).
+`?syncRetry=<ms>` and `?syncDebounce=<ms>` (sync timing), and `?tv=1` / `?tv=0` (TV mode on, remembered / off).
 
 ## Code layout
 
@@ -179,6 +227,7 @@ mastery and readiness), `?seed=<n>` (repeatable randomness), `?db=<name>` (Index
 | `js/parent.js` | Welcome, parent menu, recording studio, progress, settings and backup |
 | `js/tracker.js`, `js/tracker-view.js` | The Tracker: pure figures, and the screen that renders them |
 | `js/ui.js`, `js/app.js` | DOM helpers and parent gate; boot, shared state, navigation |
+| `js/tv.js` | TV mode: the switch, remote navigation (spatial focus), OK, Back and the wrapper bridge |
 
 ## The data file
 
@@ -237,6 +286,9 @@ not start. Warnings are listed under the parent menu.
   Chalkboard SE should give a single-storey "a" and "g". Other systems may show the double-storey
   forms (the Chromium screenshots do).
 - Word speech uses the device voice, so it depends on which voices are installed.
+- TV mode is tested in desktop Chromium with a keyboard, not on a real TV: the remote's key codes,
+  the WebView's reported viewport and device pixel ratio, the on-screen keyboard, overscan and
+  audio autoplay in the wrapper are untested there.
 - The speaker badge on each picture is 64 px, smaller than the 120 px child targets, because it is
   a secondary control inside the 150 px or larger picture card.
 - Without a family code, storage is per browser. Safari may clear site data that has not been used
