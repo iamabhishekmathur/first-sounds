@@ -1,7 +1,9 @@
 # First Sounds
 
 A tablet web app for a parent and a 3-year-old to learn the sounds of English before reading.
-The parent records every sound in their own voice; the games play those recordings.
+The parent records every sound in their own voice; the games play those recordings. Three stages:
+Hear it (sounds in picture words), See it (the letters) and, once the child is ready to blend, Read it
+(stretching sounds into words, with the parent's recordings of each word).
 
 Plain static site: HTML, CSS and ES modules, with no framework, build step or service worker. All
 paths are relative, so it works from any sub-path. Optional sync (below) adds two small Vercel
@@ -53,8 +55,8 @@ dashes.
 | Route | Purpose |
 | --- | --- |
 | `GET /api/state` | The family's doc: settings, progress, readiness, recording metadata |
-| `PUT /api/state` | Store a device's state, merged into the doc (checked and limited to known sound ids, 512 KB max). Answers with what it stored. Documents from before sessions existed (no `sessions`, rounds without `ses`/`wrong`) are accepted as they are |
-| `GET/PUT/DELETE /api/recording?id=<sound id>[&v=<version>]` | One recording (audio only, 2 MB max; an older upload never replaces a newer one). `v` is the `version` that `GET /api/state` gives |
+| `PUT /api/state` | Store a device's state, merged into the doc (checked and limited to known sound ids, 1 MB max). Answers with what it stored. Documents from before sessions or reading existed (no `sessions`, no `progress.s3`, no `blendOverride`, rounds without `ses`/`wrong`) are accepted as they are |
+| `GET/PUT/DELETE /api/recording?id=<sound id or word id>[&v=<version>]` | One recording (audio only, 2 MB max; an older upload never replaces a newer one). Word ids are `w:<word>` for the words of `data/reading.json`. `v` is the `version` that `GET /api/state` gives |
 | `DELETE /api/state` with `x-confirm: erase-everything` | Delete all recordings and state (not used by the app) |
 
 Storage: a **private** Vercel Blob store (`first-sounds-blob`). Blobs can only be read with the
@@ -63,6 +65,8 @@ layout is append-only: no request overwrites or conditionally writes a blob, so 
 cannot conflict and nothing is ever read stale.
 
 - `recordings/<sound>/<updatedAt>-<durationMs>-<t|u>-<rand>.<ext>`: one blob per uploaded version.
+  A word recording is stored under `recordings/w.<word>/` (the id `w:mat` without a colon in the
+  path; sound ids never start with `w.`), one blob per recorded word, exactly like sounds.
   The newest wins, and superseded versions are deleted by the next `GET /api/state`.
 - `state/push/<time>-<rand>.json`: one blob per `PUT /api/state`. `state/snap/<time>-<rand>.json`:
   a compaction. The state is the merge of all of them (the same merge rules as the app). Above 20
@@ -70,8 +74,9 @@ cannot conflict and nothing is ever read stale.
 - The earlier layout (`state/family.json` and `recordings/<sound>/<updatedAt>-<hex>`) is migrated by
   the first request that sees it: copied into the new layout, then the copied originals deleted.
 
-Sessions and wrong taps add no Blob operations: they travel inside the same debounced progress
-push (`PUT /api/state`) as the rounds they belong to.
+Sessions, wrong taps, reading rounds and the ready-to-blend switch add no Blob operations: they
+travel inside the same debounced progress push (`PUT /api/state`) as the rounds they belong to.
+Only a newly recorded word adds a put (its recording), like a sound.
 
 Operations are kept few because the Hobby plan includes 2,000 Blob "advanced" operations (puts and
 lists) a month, and the store stops working for the rest of the period beyond that: each PUT is one
@@ -94,7 +99,8 @@ Project environment variables (no values here):
 
 The project is `first-sounds` on Vercel, with framework "Other" and no build command. Vercel
 installs `package.json` dependencies and turns `api/*.js` into functions (`vercel.json` sets their
-duration and includes `data/sounds.json`). Upload `index.html`, `manifest.webmanifest`, `icons/`,
+duration and includes `data/sounds.json` and `data/reading.json`; the functions accept the word ids
+of the reading file deployed with them, so redeploy after adding words). Upload `index.html`, `manifest.webmanifest`, `icons/`,
 `css/`, `js/`, `data/`, `api/`, `package.json`, `package-lock.json` and `vercel.json` (not `tests/`
 or `screenshots/`) as a production deployment, either with `vercel deploy --prod` or with
 `POST https://api.vercel.com/v13/deployments` (files inline, `target: "production"`).
@@ -114,7 +120,7 @@ app (a WebView wrapper, built separately) loads `https://first-sounds-two.vercel
   through sync. A TV's first run goes straight to "Enter your family code to load your recordings"
   (never the recording welcome). Until group 1 has arrived, the child home screen shows a calm note
   for the parent instead of the games. The recording studio and backup export/import are not on the
-  TV; the TV parent menu has code entry and sync status, Tracker (read-only, scrolls with the
+  TV; the TV parent menu has code entry and sync status, Learning path, Tracker (read-only, scrolls with the
   remote), Progress, Settings, and a note that recording is done on the iPad or laptop.
 - **Remote:** arrows move focus between the big choices, the replay button and the gear; focus
   stops at the edges and never lands on a hidden or disabled control. OK (Enter, NumpadEnter or
@@ -143,6 +149,66 @@ app (a WebView wrapper, built separately) loads `https://first-sounds-two.vercel
 | `window.FirstSoundsTV` | wrapper → page | Any object (for example an `addJavascriptInterface` object), present before the page's scripts run. Its presence turns TV mode on. |
 | `FirstSoundsTV.speak(text)` | wrapper → page, optional | Called with one whole word (a string) when word speech is on, in place of the Web Speech API (Android WebView has no `speechSynthesis`). Its return value is ignored and anything it throws is caught. Without it the page uses `speechSynthesis` if present, and otherwise skips speech silently. Isolated sounds are always the parent's recordings, never speech. |
 | `window.FirstSoundsTV_onBack()` | page → wrapper | Defined by the page in TV mode. The wrapper calls it when Back is pressed (for example `evaluateJavascript("FirstSoundsTV_onBack()", cb)`). Returns `true` when the page handled Back, `false` to let Android handle it (exit). Returns `false` while the app is still loading or showed a data error. If it is not defined yet (page not loaded), the wrapper should treat that as `false`. |
+
+## Reading ("Read it", stage 3)
+
+Blending sounds into words, with the parent's own stretched recordings ("mmmaaat", never
+"m… a… t").
+
+- **Data:** `data/reading.json` = `{ version: 1, words: [{ word, graphemes[], phonemes[], level, emoji? }] }`
+  (graphemes and phonemes one to one, each phoneme a sound id of `sounds.json`; levels 1 VC/CVC
+  starting with a continuous sound, 2 CVC starting with a stop, 3 consonant blends, 4 digraphs or
+  unit sounds). `js/reading.js` validates it next to `sounds.json`. A file-level problem (missing,
+  not JSON, wrong version, no usable word) turns stage 3 off with a note for the parent; everything
+  else works as before. A single bad word (not lowercase a-z, graphemes not spelling the word or not
+  aligned, unknown sound, bad level or emoji, duplicate) is left out with a warning. Warnings also
+  flag a letter that is not one of its sound's letters, a letter See it shows differently ("k" when
+  See it shows "c"), and a level that does not match the sounds (warnings only).
+- **Available word:** every sound of it solid in See it, and recorded by the parent.
+- **Unlock:** the readiness check passed on 3 separate days, or the parent's switch "Your child is
+  ready to blend" (Settings, with a confirmation that explains the check), and at least one
+  available word.
+- **Studio, Words tab:** the next 5 words to record (sounds all solid in See it, level then file
+  order), or all words by level with what each still waits for. Each word shows large with
+  "Say it stretched, with no pauses: mmmaaat" (continuous sounds tripled, a longer letter group gets
+  its last letter twice more: "shhh"; stops as they are). Same recorder (auto stop after 7 s), trim,
+  storage and sync as sounds. Not on the TV.
+- **The round:** one tile per grapheme over a road with a dot under each. Sliding from the left end
+  to the right (or tapping the go arrow, or OK on the TV) plays the stretched recording while the
+  tiles light up in turn: the recording's length is split by weight (continuous 1.0, stop 0.4).
+  Starting in the middle, a tap in the middle, or sliding backwards does nothing. Then "say it fast"
+  (the rabbit) closes the tiles up and says the word at normal speed (speech, or
+  `FirstSoundsTV.speak`). Then, for a word with a picture and another picture word available, a
+  two-picture check (the other picture is from the same level with a different first sound when
+  possible). Wrong and right work as in the other stages (wiggle and the stretched word again;
+  glow after two wrong; first tap counts). Words without a picture, or with no possible other
+  picture, end after the fast version and are stored as "practised" (`p: 1`), which never counts for
+  mastery. With no speech at all (or word speech turned off), a word with a picture check goes
+  straight to the check (showing its picture first would give the answer away); one without shows
+  its picture.
+- **TV:** focus starts on the road; OK plays the blend, focus moves to "say it fast", then to the
+  pictures. Back does nothing during the round.
+- **Mastery and scheduling:** per word, the sound rule on picture-check rounds. Once unlocked, every
+  third round of a session is a reading round (3 of 10), at most 2 new words per session, mostly
+  learning words with about a quarter review; when only new words are left and the 2 are used, a
+  sound round is played instead.
+- **Stored:** `progress.s3` keyed by word id `w:<word>` (the last 12 rounds per word), in sessions
+  (`stages` may include 3, `practised` counts practised rounds) with wrong taps (`{ w: word }`).
+  The parent's switch is `blendOverride: { on, at }` (kv key `blend`, last change wins; a progress
+  reset keeps it). The server keeps reading rounds for any well-formed word id (at most 1000 words),
+  so editing the word list never drops a child's rounds; it accepts recordings only for the words in
+  `data/reading.json`.
+
+## Learning path (parent area)
+
+Parent area > Learning path (also on the TV, read-only) shows the whole journey as a vertical path:
+Hear the sounds, Know the letters, Ready to blend (days out of 3, or "turned on by you"), Blend first
+words (level 1), Blend harder words (one bar per level 2 to 4) and Read sentences ("coming later").
+Each has a status, a bar with numbers and one sentence on what moves it forward; the top says where
+the child is and the single next step. Word bars count words with a picture (only those can become
+solid); practised words without a picture are noted under the bar. A compact version is at the top
+of the Tracker. The figures are pure functions in `js/course.js` (unit tested), rendered by
+`js/course-view.js`.
 
 ## The Tracker (parent area)
 
@@ -196,8 +262,17 @@ status of its oldest kept rounds. A brand-new install shows an explanation inste
 - `tests/unit/modes.test.mjs` (position modes and round rules per mode) and
   `tests/unit/tracker.test.mjs` (the Tracker's figures). `tests/fixtures/sounds.modes.json` has
   sounds in all three modes in group 1 (m and s start, ng end, oo anywhere).
-- `tests/browser/realdata.test.mjs` checks the real `data/sounds.json`. It is skipped if the file
-  is missing.
+- `tests/browser/realdata.test.mjs` checks the real `data/sounds.json` (and `data/reading.json`
+  when present). It is skipped if the file is missing.
+- `tests/unit/reading.test.mjs` (validation, availability, unlock and override, mastery, session
+  mixing and the new-word cap, distractors, timing weights, respelling, the slide rule) and
+  `tests/unit/course.test.mjs` (Learning path figures). `tests/fixtures/reading.sample.json` is the
+  reading fixture (22 words on the sample sounds).
+- `tests/browser/reading.test.mjs`: the Words tab and recording a word, a reading round by touch
+  (slide, lights in order, picture check), a word without a picture, a reading round on the TV
+  with the keyboard, the parent override, the Learning path, migration from an old local store and
+  an old server doc, and a word recording syncing to a fresh device.
+  `tests/browser/reading-screenshots.test.mjs` writes screenshots 33 to 40 and `tv-16` to `tv-20`.
 - `tests/browser/sync.test.mjs`: entering the code, first upload, a fresh profile pulling the same
   recordings and progress, a recording uploaded straight away, a wrong code, offline then
   reconnecting, the server down, failed uploads retried by themselves, two devices playing offline at once, a reset, and backups.
@@ -209,7 +284,7 @@ status of its oldest kept rounds. A brand-new install shows an explanation inste
   `speechSynthesis`, and the iPad unchanged outside TV mode. `tests/unit/tv.test.mjs`: the mode switch
   and the arrow-key targeting. `tests/browser/tv-screenshots.test.mjs` writes `screenshots/tv-*.png`.
 
-Test hooks are URL parameters: `?data=<path>` (data file), `?today=YYYY-MM-DD` (date used for
+Test hooks are URL parameters: `?data=<path>` (data file), `?reading=<path>` (reading words file), `?today=YYYY-MM-DD` (date used for
 mastery and readiness), `?seed=<n>` (repeatable randomness), `?db=<name>` (IndexedDB name),
 `?syncRetry=<ms>` and `?syncDebounce=<ms>` (sync timing), and `?tv=1` / `?tv=0` (TV mode on, remembered / off).
 
@@ -218,12 +293,15 @@ mastery and readiness), `?seed=<n>` (repeatable randomness), `?db=<name>` (Index
 | File | Purpose |
 | --- | --- |
 | `js/data.js` | Loads `data/sounds.json` and validates the schema |
+| `js/reading.js` | Loads and validates `data/reading.json`; the pure reading rules (availability, unlock, mastery, scheduling, distractors, timing) |
+| `js/read-round.js` | The reading round screen |
+| `js/course.js`, `js/course-view.js` | The Learning path: pure figures, and the screen and the Tracker's compact path |
 | `js/storage.js` | IndexedDB (recordings + key/value state), in-memory fallback, backup export/import |
 | `js/sync.js`, `js/syncdoc.js` | Sync with the server; the sync document and its merge rules |
 | `api/` | Vercel functions for sync (`_lib/` holds shared code, not routes) |
 | `js/audio.js` | Recording (MediaRecorder), silence trimming, playback (Web Audio), tones, word speech |
 | `js/logic.js` | Pure position modes, mastery, unlocking, target choice and distractor rules (no DOM) |
-| `js/game.js` | Child screens: home, Hear it, See it, readiness, all done |
+| `js/game.js` | Child screens: home, Hear it, See it, readiness, all done; mixes reading rounds into sessions |
 | `js/parent.js` | Welcome, parent menu, recording studio, progress, settings and backup |
 | `js/tracker.js`, `js/tracker-view.js` | The Tracker: pure figures, and the screen that renders them |
 | `js/ui.js`, `js/app.js` | DOM helpers and parent gate; boot, shared state, navigation |
@@ -273,6 +351,8 @@ not start. Warnings are listed under the parent menu.
   sounds, as position modes did for the th sounds, ng and the long vowels.
 - **Readiness**: a bonus round half way through a session, at most once a day, after group 1 is
   solid in See it. It does not count toward the session's rounds.
+- **Session length**: 10 rounds by default, 4 to 20 in Settings. A family that never changed the
+  setting (`settingsAt` 0) gets the default, even if its devices stored the earlier default of 6.
 
 ## Known limitations
 
