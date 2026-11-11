@@ -6,7 +6,7 @@
 //
 // Test hooks: ?syncRetry=<ms> (first retry delay), ?syncDebounce=<ms> (progress push delay).
 
-import { mergeDocs, coreOf, canon, normaliseCode } from './syncdoc.js';
+import { mergeDocs, coreOf, canon, normaliseCode, cleanSettings } from './syncdoc.js';
 
 export const SYNC_KEY = 'sync'; // IndexedDB kv key for { code }; never included in backups
 
@@ -32,10 +32,11 @@ export function docFromApp(app) {
   return {
     settings: { speakWords: app.settings.speakWords, roundsPerSession: app.settings.roundsPerSession },
     settingsAt: app.meta.settingsAt || 0,
-    progress: { s1: app.progress.s1 || {}, s2: app.progress.s2 || {} },
+    progress: { s1: app.progress.s1 || {}, s2: app.progress.s2 || {}, s3: app.progress.s3 || {} },
     resetAt: app.meta.resetAt || 0,
     readiness: app.readiness,
     sessions: app.sessions || [],
+    blendOverride: app.blendOverride || null,
     recordings,
   };
 }
@@ -103,8 +104,12 @@ export function createSync(app, { base = 'api/', retryMs = 5000, debounceMs = 25
       app.sessions = merged.sessions;
       writes.push(app.store.setKV('sessions', app.sessions));
     }
+    if (canon(merged.blendOverride) !== canon(local.blendOverride)) {
+      app.blendOverride = merged.blendOverride;
+      writes.push(app.store.setKV('blend', app.blendOverride));
+    }
     if (merged.settings && (canon(merged.settings) !== canon(local.settings) || merged.settingsAt !== local.settingsAt)) {
-      app.settings = { ...app.settings, ...merged.settings };
+      app.settings = { ...app.settings, ...cleanSettings(merged.settings, merged.settingsAt) };
       app.meta.settingsAt = merged.settingsAt;
       writes.push(app.store.setKV('settings', app.settings));
     }
@@ -288,11 +293,12 @@ export function createSync(app, { base = 'api/', retryMs = 5000, debounceMs = 25
     /** Something changed locally. Recordings and resets push at once; progress and settings debounce. */
     changed(kind) {
       if (!code) return;
+      // The ready-to-blend switch rides along like settings (debounced, in the same state push).
       if (kind === 'recording' || kind === 'reset' || kind === 'import') { run(); return; }
       if (running) { again = true; return; }
       clearTimeout(timer);
       timer = null;
-      timer = setTimeout(() => run(false), kind === 'settings' ? Math.min(debounceMs, 1000) : debounceMs);
+      timer = setTimeout(() => run(false), kind === 'settings' || kind === 'blend' ? Math.min(debounceMs, 1000) : debounceMs);
     },
 
     now: () => run(),

@@ -9,6 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { makeApi } from '../api/_lib/core.js';
 import { memoryBackend } from '../api/_lib/memory-backend.js';
+import { knownIds } from '../js/syncdoc.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TYPES = {
@@ -19,16 +20,18 @@ const TYPES = {
 
 /**
  * opts.familyCode: code the fake API accepts. opts.dataFile: sound ids it accepts (default: the
- * real data file). opts.backendOptions: knobs for the in-memory store (latencyMs, listLagMs). The
+ * real data file). opts.readingFile: word ids it accepts (default: data/reading.json if present). opts.backendOptions: knobs for the in-memory store (latencyMs, listLagMs). The
  * returned `api` has the in-memory `backend`, `readDoc()` (the merged server doc), `down` (true:
  * every API request fails with 503), `fail` (optional (req, url) => true: that request fails with 504)
  * and `requests` (a log of method + path).
  */
-export function startServer(port = 0, { familyCode = 'local-test-code-11', dataFile = 'data/sounds.json', backendOptions = {}, deadlineMs } = {}) {
+export function startServer(port = 0, { familyCode = 'local-test-code-11', dataFile = 'data/sounds.json', readingFile = 'data/reading.json', backendOptions = {}, deadlineMs } = {}) {
   const data = JSON.parse(readFileSync(path.join(ROOT, dataFile), 'utf8'));
+  let reading = null;
+  try { reading = readingFile ? JSON.parse(readFileSync(path.join(ROOT, readingFile), 'utf8')) : null; } catch { /* no reading words */ }
   const backend = memoryBackend(backendOptions);
   const api = { backend, down: false, requests: [], familyCode };
-  const handle = makeApi({ backend, familyCode: () => api.familyCode, validIds: new Set(data.sounds.map((x) => x.id)), deadlineMs });
+  const handle = makeApi({ backend, familyCode: () => api.familyCode, validIds: knownIds(data, reading), deadlineMs });
   api.readDoc = handle.readDoc; // the merged doc on the server, or null when it is empty
   const routes = { '/api/state': handle('state'), '/api/recording': handle('recording') };
   const server = http.createServer(async (req, res) => {

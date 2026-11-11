@@ -43,7 +43,7 @@ test('state: empty at first, then every put is merged into it', async () => {
   assert.equal(s.empty, false);
   const bad = await call('state', { method: 'PUT', body: '{not json', headers: { 'content-type': 'application/json' } });
   assert.equal(bad.status, 400);
-  const big = await call('state', { method: 'PUT', body: 'x'.repeat(600 * 1024), headers: { 'content-type': 'application/json' } });
+  const big = await call('state', { method: 'PUT', body: 'x'.repeat(1100 * 1024), headers: { 'content-type': 'application/json' } });
   assert.equal(big.status, 413);
 });
 

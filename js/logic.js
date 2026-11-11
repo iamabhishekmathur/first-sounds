@@ -4,6 +4,8 @@
 // Rounds kept per sound per stage. Mastery looks at the last 6 only; the rest feeds the parent's
 // Tracker (per-sound days practised and trends). Bounded so the sync doc stays small.
 export const HISTORY_KEEP = 30;
+/** Reading rounds kept per word (stage 3): words are many, so fewer than per sound. */
+export const WORD_HISTORY_KEEP = 12;
 /** A sound needs at least this many words with it in a position to be tested in that position. */
 export const MIN_WORDS_FOR_MODE = 4;
 export const MIN_WORDS_FOR_TARGET = MIN_WORDS_FOR_MODE;
@@ -177,7 +179,7 @@ export function recordRound(progress, stage, id, correct, day, extra = null) {
   const key = `s${stage}`;
   const base = progress || {};
   const prevStage = base[key] || {};
-  const hist = [...(prevStage[id] || []), { c: correct ? 1 : 0, d: day, ...(extra || {}) }].slice(-HISTORY_KEEP);
+  const hist = [...(prevStage[id] || []), { c: correct ? 1 : 0, d: day, ...(extra || {}) }].slice(stage === 3 ? -WORD_HISTORY_KEEP : -HISTORY_KEEP);
   return { ...base, [key]: { ...prevStage, [id]: hist } };
 }
 

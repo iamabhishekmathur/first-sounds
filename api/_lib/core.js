@@ -5,13 +5,14 @@
 //   GET    /api/state                      -> the family's sync doc (see js/syncdoc.js)
 //   PUT    /api/state        JSON core doc -> stored, returns the merged doc (including this push)
 //   DELETE /api/state        header x-confirm: erase-everything -> deletes all recordings and state
-//   GET    /api/recording?id=<sound>       -> audio bytes
+//   GET    /api/recording?id=<sound or word id> -> audio bytes (word ids are "w:<word>", from data/reading.json)
 //   PUT    /api/recording?id=<sound>       body: audio bytes; headers x-updated-at, x-duration-ms, x-trimmed
 //   DELETE /api/recording?id=<sound>
 //
 // Storage layout: append-only. No request ever overwrites or conditionally writes a blob, so there
 // is nothing to conflict on and nothing can be read stale (a pathname always has the same bytes).
-//   recordings/<id>/<updatedAt>-<durationMs>-<t|u>-<rand>.<ext>   one blob per uploaded version;
+//   recordings/<id>/<updatedAt>-<durationMs>-<t|u>-<rand>.<ext>   one blob per uploaded version
+//                                        (a word id "w:mat" is stored under "w.mat": no ":" in paths);
 //                                        the highest (updatedAt, pathname) wins, older ones are
 //                                        deleted by the next GET /api/state.
 //   state/push/<time>-<rand>.json      one blob per PUT /api/state (the sanitised core doc)
@@ -40,7 +41,8 @@ import { emptyDoc, mergeDocs, sanitiseCore, normaliseCode, coreOf, canon } from 
 
 export const LEGACY_STATE_PATH = 'state/family.json';
 export const MAX_RECORDING_BYTES = 2 * 1024 * 1024;
-export const MAX_STATE_BYTES = 512 * 1024;
+// Room for a year of sessions plus reading rounds for a few hundred words (about 1 KB per word).
+export const MAX_STATE_BYTES = 1024 * 1024;
 export const COMPACT_OVER = 20;
 const AUDIO_TYPES = /^audio\/(wav|wave|x-wav|mp4|x-m4a|aac|webm|ogg|mpeg)(;.*)?$/i;
 
@@ -85,15 +87,19 @@ function audioType(contentType) {
   return ext ? { mime: EXT_MIME[ext], ext } : null;
 }
 
+/** The path segment of a recording id: word ids "w:mat" become "w.mat" (sound ids have neither). */
+export const idSegment = (id) => (id.startsWith('w:') ? `w.${id.slice(2)}` : id);
+const segmentId = (seg) => (seg.startsWith('w.') ? `w:${seg.slice(2)}` : seg);
+
 export function recordingPath(id, { updatedAt, durationMs, trimmed, ext }, suffix = rand()) {
-  return `recordings/${id}/${updatedAt}-${Math.round(durationMs) || 0}-${trimmed ? 't' : 'u'}-${suffix}.${ext}`;
+  return `recordings/${idSegment(id)}/${updatedAt}-${Math.round(durationMs) || 0}-${trimmed ? 't' : 'u'}-${suffix}.${ext}`;
 }
 
 /** Metadata encoded in a recording pathname, or null if it is not one. */
 export function parseRecordingPath(pathname) {
   const m = REC_RE.exec(pathname);
   if (!m || !EXT_MIME[m[6]]) return null;
-  return { id: m[1], updatedAt: Number(m[2]), durationMs: Number(m[3]), trimmed: m[4] === 't', mime: EXT_MIME[m[6]], path: pathname };
+  return { id: segmentId(m[1]), updatedAt: Number(m[2]), durationMs: Number(m[3]), trimmed: m[4] === 't', mime: EXT_MIME[m[6]], path: pathname };
 }
 
 /** a before b: older updatedAt first, then pathname. The greatest version of a sound wins. */
@@ -292,7 +298,7 @@ export function makeApi({ backend, familyCode, validIds, deadlineMs = 9000, log 
 
   function soundId(url) {
     const id = url.searchParams.get('id') || '';
-    if (!validIds.has(id)) throw new HttpError(400, 'unknown sound');
+    if (!validIds.has(id)) throw new HttpError(400, 'unknown sound or word');
     return id;
   }
 
@@ -347,10 +353,10 @@ export function makeApi({ backend, familyCode, validIds, deadlineMs = 9000, log 
       // The version named by GET /api/state is read directly (no listing). Without one, or if it was
       // replaced meanwhile, the sound's versions are listed.
       const v = url.searchParams.get('v');
-      const named = v ? parseRecordingPath(`recordings/${id}/${v}`) : null;
+      const named = v ? parseRecordingPath(`recordings/${idSegment(id)}/${v}`) : null;
       const candidates = named ? [async () => named] : [];
       candidates.push(async () => {
-        let items = await backend.list(`recordings/${id}/`);
+        let items = await backend.list(`recordings/${idSegment(id)}/`);
         if (items.some((it) => LEGACY_REC_RE.test(it.pathname))) items = await listing(); // not migrated yet
         const list = versionsOf(items)[id];
         return list && list[list.length - 1];
@@ -391,7 +397,7 @@ export function makeApi({ backend, familyCode, validIds, deadlineMs = 9000, log 
     }
     if (req.method === 'DELETE') {
       await listing(); // migrates first, so a legacy copy cannot come back
-      const paths = (await backend.list(`recordings/${id}/`)).map((it) => it.pathname);
+      const paths = (await backend.list(`recordings/${idSegment(id)}/`)).map((it) => it.pathname);
       if (paths.length) await backend.del(paths);
       send(res, 200, { deleted: paths.length });
       return;
