@@ -604,15 +604,19 @@ html.tv .p-input { max-width: 520px; }
 }
 
 /* TV: the reading round */
-html.tv .round.reading { --tile: min(25vh, calc((88vw - 22vh) / var(--n, 3) - 2.5vh)); }
-html.tv .round.reading.checking { --tile: min(15vh, calc((88vw - 22vh) / var(--n, 3) - 2.5vh)); }
-html.tv .read-word { column-gap: 2.2vh; row-gap: 2vh; }
+/* Height budget: about 68vh between the top bar and the prompt (tiles 1.22, road 0.62, next 1.5 tiles). */
+html.tv .round.reading { --tile: min(18vh, calc((88vw - 22vh) / var(--n, 3) - 2.5vh)); }
+html.tv .round.reading.checking { --tile: min(11vh, calc((88vw - 22vh) / var(--n, 3) - 2.5vh)); }
+html.tv .read-area { gap: 2.5vh; overflow: hidden; }
+html.tv .read-word { column-gap: 2.2vh; row-gap: 1.5vh; }
 html.tv .gtile { border-width: 0.8vh; border-radius: 4vh; box-shadow: 0 1.2vh 0 var(--line); }
 html.tv .road-bar, html.tv .road-fill { height: 2.6vh; margin-top: -1.3vh; }
 html.tv .road-dot { width: 3.8vh; height: 3.8vh; border-width: 0.7vh; }
 html.tv .road-knob { width: 4.4vh; height: 4.4vh; margin: -2.2vh 0 0 -2.2vh; border-width: 0.8vh; }
 html.tv #app .road:focus { outline-offset: 1.2vh; border-radius: 6vh; transform: none; }
 html.tv #app .road:focus .road-go { transform: scale(1.1); }
-html.tv .read-choices .choice, html.tv .round.reading.checking .read-choices .choice { width: 40vh; }
+html.tv .read-choices .choice, html.tv .round.reading.checking .read-choices .choice { width: 34vh; }
+html.tv .round.reading.checking .read-choices .choice .emoji { font-size: 20vh; }
 html.tv .lpc-name { font-size: 15px; }
 html.tv .read-word.fast .gtile:nth-child(2) { border-left-width: 0.8vh; } html.tv .read-word.fast .gtile:nth-last-child(3) { border-right-width: 0.8vh; }
+html.tv .round.reading.checking .read-area { gap: 5vh; }
