@@ -34,10 +34,10 @@ test('daily activity: sessions count with their totals, rounds without a known s
   };
   const sessions = [S('A', '2026-11-09', 6, 4), S('B', '2026-11-10', 6, 6, 3)];
   const daily = T.dailyActivity(progress, sessions);
-  assert.deepEqual(daily.get('2026-11-01'), { rounds: 2, correct: 1, sessions: 0, ms: 0 }, 'old rounds still count');
+  assert.deepEqual(daily.get('2026-11-01'), { rounds: 2, correct: 1, checked: 2, sessions: 0, ms: 0 }, 'old rounds still count');
   // Session A's own totals (6 rounds, even though only 3 of its rounds are still kept) + 1 orphan.
-  assert.deepEqual(daily.get('2026-11-09'), { rounds: 7, correct: 5, sessions: 1, ms: 4 * 60000 });
-  assert.deepEqual(daily.get('2026-11-10'), { rounds: 6, correct: 6, sessions: 1, ms: 3 * 60000 });
+  assert.deepEqual(daily.get('2026-11-09'), { rounds: 7, correct: 5, checked: 7, sessions: 1, ms: 4 * 60000 });
+  assert.deepEqual(daily.get('2026-11-10'), { rounds: 6, correct: 6, checked: 6, sessions: 1, ms: 3 * 60000 });
   assert.equal(daily.has('junk'), false);
 });
 

@@ -46,10 +46,13 @@ export function relativeDay(d, today) {
 
 /* ---------- rounds and days ---------- */
 
-/** Every kept round as { stage, sound, c, d, t, id, ses, wrong }, oldest first. */
-export function allRounds(progress) {
+/**
+ * Every kept round as { stage, sound, c, d, t, id, ses, wrong, p }, oldest first. Stage 3 (reading)
+ * rounds have a word id ("w:mat") as `sound`.
+ */
+export function allRounds(progress, stages = [1, 2, 3]) {
   const out = [];
-  for (const stage of [1, 2]) {
+  for (const stage of stages) {
     for (const [sound, hist] of Object.entries((progress && progress[`s${stage}`]) || {})) {
       if (!Array.isArray(hist)) continue;
       for (const r of hist) if (r && typeof r === 'object') out.push({ stage, sound, ...r });
@@ -63,13 +66,14 @@ export function hasAnyPlay(progress, sessions) {
 }
 
 /**
- * Activity per calendar day: Map day -> { rounds, correct, sessions, ms }.
+ * Activity per calendar day: Map day -> { rounds, correct, checked, sessions, ms }.
  * A session counts with its own totals; a round counts by itself only if it has no known session.
+ * checked: rounds with a right or wrong answer (practised reading rounds have none), for accuracy.
  */
 export function dailyActivity(progress, sessions) {
   const map = new Map();
   const at = (d) => {
-    if (!map.has(d)) map.set(d, { rounds: 0, correct: 0, sessions: 0, ms: 0 });
+    if (!map.has(d)) map.set(d, { rounds: 0, correct: 0, checked: 0, sessions: 0, ms: 0 });
     return map.get(d);
   };
   const known = new Set();
@@ -79,9 +83,11 @@ export function dailyActivity(progress, sessions) {
     const d = isDay(s.d) ? s.d : null;
     if (!d) continue;
     const x = at(d);
+    const rounds = Number(s.rounds) || 0;
     x.sessions += 1;
-    x.rounds += Number(s.rounds) || 0;
+    x.rounds += rounds;
     x.correct += Number(s.correct) || 0;
+    x.checked += Math.max(0, rounds - (Number(s.practised) || 0));
     x.ms += Math.max(0, (Number(s.end) || 0) - (Number(s.start) || 0));
   }
   for (const r of allRounds(progress)) {
@@ -89,6 +95,7 @@ export function dailyActivity(progress, sessions) {
     if (!isDay(r.d)) continue;
     const x = at(r.d);
     x.rounds += 1;
+    if (!r.p) x.checked += 1;
     if (r.c) x.correct += 1;
   }
   return map;
@@ -99,7 +106,7 @@ export function accuracyBetween(daily, from, to) {
   let rounds = 0;
   let correct = 0;
   for (const [d, x] of daily) {
-    if (d >= from && d <= to) { rounds += x.rounds; correct += x.correct; }
+    if (d >= from && d <= to) { rounds += x.checked ?? x.rounds; correct += x.correct; }
   }
   return { rounds, correct, acc: rounds ? correct / rounds : null };
 }
@@ -114,8 +121,9 @@ export function daysPractisedBetween(daily, from, to) {
 export function dailySeries(progress, sessions, today, n = 30) {
   const daily = dailyActivity(progress, sessions);
   return dayRange(today, n).map((d) => {
-    const x = daily.get(d) || { rounds: 0, correct: 0 };
-    return { d, rounds: x.rounds, correct: x.correct, acc: x.rounds ? x.correct / x.rounds : null };
+    const x = daily.get(d) || { rounds: 0, correct: 0, checked: 0 };
+    const checked = x.checked ?? x.rounds;
+    return { d, rounds: x.rounds, correct: x.correct, acc: checked ? x.correct / checked : null };
   });
 }
 
@@ -300,7 +308,7 @@ export function sortRows(rows, by = 'attention') {
 export function mixUps(progress, limit = 8) {
   const map = new Map();
   let rounds = 0;
-  for (const r of allRounds(progress)) {
+  for (const r of allRounds(progress, [1, 2])) { // reading mix-ups are word pictures: not sound mix-ups
     if (!Array.isArray(r.wrong) || !r.wrong.length) continue;
     rounds++;
     const seen = new Set();
