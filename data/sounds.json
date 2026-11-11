@@ -183,7 +183,7 @@
     "h"
    ],
    "group": 3,
-   "kind": "continuous",
+   "kind": "stop",
    "say": "h-",
    "tip": "Just a breath out, no voice: h-, not huh.",
    "exampleWord": "hat",

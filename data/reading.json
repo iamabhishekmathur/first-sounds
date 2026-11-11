@@ -1,0 +1,3451 @@
+{
+  "version": 1,
+  "words": [
+    {
+      "word": "am",
+      "graphemes": [
+        "a",
+        "m"
+      ],
+      "phonemes": [
+        "a",
+        "m"
+      ],
+      "level": 1
+    },
+    {
+      "word": "at",
+      "graphemes": [
+        "a",
+        "t"
+      ],
+      "phonemes": [
+        "a",
+        "t"
+      ],
+      "level": 1
+    },
+    {
+      "word": "an",
+      "graphemes": [
+        "a",
+        "n"
+      ],
+      "phonemes": [
+        "a",
+        "n"
+      ],
+      "level": 1
+    },
+    {
+      "word": "in",
+      "graphemes": [
+        "i",
+        "n"
+      ],
+      "phonemes": [
+        "i",
+        "n"
+      ],
+      "level": 1
+    },
+    {
+      "word": "it",
+      "graphemes": [
+        "i",
+        "t"
+      ],
+      "phonemes": [
+        "i",
+        "t"
+      ],
+      "level": 1
+    },
+    {
+      "word": "if",
+      "graphemes": [
+        "i",
+        "f"
+      ],
+      "phonemes": [
+        "i",
+        "f"
+      ],
+      "level": 1
+    },
+    {
+      "word": "up",
+      "graphemes": [
+        "u",
+        "p"
+      ],
+      "phonemes": [
+        "u",
+        "p"
+      ],
+      "level": 1,
+      "emoji": "⬆️"
+    },
+    {
+      "word": "on",
+      "graphemes": [
+        "o",
+        "n"
+      ],
+      "phonemes": [
+        "o",
+        "n"
+      ],
+      "level": 1
+    },
+    {
+      "word": "us",
+      "graphemes": [
+        "u",
+        "s"
+      ],
+      "phonemes": [
+        "u",
+        "s"
+      ],
+      "level": 1
+    },
+    {
+      "word": "mat",
+      "graphemes": [
+        "m",
+        "a",
+        "t"
+      ],
+      "phonemes": [
+        "m",
+        "a",
+        "t"
+      ],
+      "level": 1
+    },
+    {
+      "word": "sat",
+      "graphemes": [
+        "s",
+        "a",
+        "t"
+      ],
+      "phonemes": [
+        "s",
+        "a",
+        "t"
+      ],
+      "level": 1
+    },
+    {
+      "word": "man",
+      "graphemes": [
+        "m",
+        "a",
+        "n"
+      ],
+      "phonemes": [
+        "m",
+        "a",
+        "n"
+      ],
+      "level": 1,
+      "emoji": "👨"
+    },
+    {
+      "word": "map",
+      "graphemes": [
+        "m",
+        "a",
+        "p"
+      ],
+      "phonemes": [
+        "m",
+        "a",
+        "p"
+      ],
+      "level": 1,
+      "emoji": "🗺️"
+    },
+    {
+      "word": "mad",
+      "graphemes": [
+        "m",
+        "a",
+        "d"
+      ],
+      "phonemes": [
+        "m",
+        "a",
+        "d"
+      ],
+      "level": 1,
+      "emoji": "😠"
+    },
+    {
+      "word": "mop",
+      "graphemes": [
+        "m",
+        "o",
+        "p"
+      ],
+      "phonemes": [
+        "m",
+        "o",
+        "p"
+      ],
+      "level": 1
+    },
+    {
+      "word": "mud",
+      "graphemes": [
+        "m",
+        "u",
+        "d"
+      ],
+      "phonemes": [
+        "m",
+        "u",
+        "d"
+      ],
+      "level": 1
+    },
+    {
+      "word": "men",
+      "graphemes": [
+        "m",
+        "e",
+        "n"
+      ],
+      "phonemes": [
+        "m",
+        "e",
+        "n"
+      ],
+      "level": 1
+    },
+    {
+      "word": "met",
+      "graphemes": [
+        "m",
+        "e",
+        "t"
+      ],
+      "phonemes": [
+        "m",
+        "e",
+        "t"
+      ],
+      "level": 1
+    },
+    {
+      "word": "sad",
+      "graphemes": [
+        "s",
+        "a",
+        "d"
+      ],
+      "phonemes": [
+        "s",
+        "a",
+        "d"
+      ],
+      "level": 1,
+      "emoji": "😢"
+    },
+    {
+      "word": "sap",
+      "graphemes": [
+        "s",
+        "a",
+        "p"
+      ],
+      "phonemes": [
+        "s",
+        "a",
+        "p"
+      ],
+      "level": 1
+    },
+    {
+      "word": "sip",
+      "graphemes": [
+        "s",
+        "i",
+        "p"
+      ],
+      "phonemes": [
+        "s",
+        "i",
+        "p"
+      ],
+      "level": 1
+    },
+    {
+      "word": "sit",
+      "graphemes": [
+        "s",
+        "i",
+        "t"
+      ],
+      "phonemes": [
+        "s",
+        "i",
+        "t"
+      ],
+      "level": 1
+    },
+    {
+      "word": "sun",
+      "graphemes": [
+        "s",
+        "u",
+        "n"
+      ],
+      "phonemes": [
+        "s",
+        "u",
+        "n"
+      ],
+      "level": 1,
+      "emoji": "☀️"
+    },
+    {
+      "word": "sum",
+      "graphemes": [
+        "s",
+        "u",
+        "m"
+      ],
+      "phonemes": [
+        "s",
+        "u",
+        "m"
+      ],
+      "level": 1
+    },
+    {
+      "word": "fan",
+      "graphemes": [
+        "f",
+        "a",
+        "n"
+      ],
+      "phonemes": [
+        "f",
+        "a",
+        "n"
+      ],
+      "level": 1
+    },
+    {
+      "word": "fat",
+      "graphemes": [
+        "f",
+        "a",
+        "t"
+      ],
+      "phonemes": [
+        "f",
+        "a",
+        "t"
+      ],
+      "level": 1
+    },
+    {
+      "word": "fit",
+      "graphemes": [
+        "f",
+        "i",
+        "t"
+      ],
+      "phonemes": [
+        "f",
+        "i",
+        "t"
+      ],
+      "level": 1
+    },
+    {
+      "word": "fin",
+      "graphemes": [
+        "f",
+        "i",
+        "n"
+      ],
+      "phonemes": [
+        "f",
+        "i",
+        "n"
+      ],
+      "level": 1
+    },
+    {
+      "word": "fun",
+      "graphemes": [
+        "f",
+        "u",
+        "n"
+      ],
+      "phonemes": [
+        "f",
+        "u",
+        "n"
+      ],
+      "level": 1
+    },
+    {
+      "word": "fed",
+      "graphemes": [
+        "f",
+        "e",
+        "d"
+      ],
+      "phonemes": [
+        "f",
+        "e",
+        "d"
+      ],
+      "level": 1
+    },
+    {
+      "word": "fib",
+      "graphemes": [
+        "f",
+        "i",
+        "b"
+      ],
+      "phonemes": [
+        "f",
+        "i",
+        "b"
+      ],
+      "level": 1
+    },
+    {
+      "word": "net",
+      "graphemes": [
+        "n",
+        "e",
+        "t"
+      ],
+      "phonemes": [
+        "n",
+        "e",
+        "t"
+      ],
+      "level": 1
+    },
+    {
+      "word": "nap",
+      "graphemes": [
+        "n",
+        "a",
+        "p"
+      ],
+      "phonemes": [
+        "n",
+        "a",
+        "p"
+      ],
+      "level": 1,
+      "emoji": "😴"
+    },
+    {
+      "word": "nut",
+      "graphemes": [
+        "n",
+        "u",
+        "t"
+      ],
+      "phonemes": [
+        "n",
+        "u",
+        "t"
+      ],
+      "level": 1,
+      "emoji": "🥜"
+    },
+    {
+      "word": "nod",
+      "graphemes": [
+        "n",
+        "o",
+        "d"
+      ],
+      "phonemes": [
+        "n",
+        "o",
+        "d"
+      ],
+      "level": 1
+    },
+    {
+      "word": "not",
+      "graphemes": [
+        "n",
+        "o",
+        "t"
+      ],
+      "phonemes": [
+        "n",
+        "o",
+        "t"
+      ],
+      "level": 1
+    },
+    {
+      "word": "nip",
+      "graphemes": [
+        "n",
+        "i",
+        "p"
+      ],
+      "phonemes": [
+        "n",
+        "i",
+        "p"
+      ],
+      "level": 1
+    },
+    {
+      "word": "lip",
+      "graphemes": [
+        "l",
+        "i",
+        "p"
+      ],
+      "phonemes": [
+        "l",
+        "i",
+        "p"
+      ],
+      "level": 1
+    },
+    {
+      "word": "lap",
+      "graphemes": [
+        "l",
+        "a",
+        "p"
+      ],
+      "phonemes": [
+        "l",
+        "a",
+        "p"
+      ],
+      "level": 1
+    },
+    {
+      "word": "lid",
+      "graphemes": [
+        "l",
+        "i",
+        "d"
+      ],
+      "phonemes": [
+        "l",
+        "i",
+        "d"
+      ],
+      "level": 1
+    },
+    {
+      "word": "let",
+      "graphemes": [
+        "l",
+        "e",
+        "t"
+      ],
+      "phonemes": [
+        "l",
+        "e",
+        "t"
+      ],
+      "level": 1
+    },
+    {
+      "word": "leg",
+      "graphemes": [
+        "l",
+        "e",
+        "g"
+      ],
+      "phonemes": [
+        "l",
+        "e",
+        "g"
+      ],
+      "level": 1,
+      "emoji": "🦵"
+    },
+    {
+      "word": "lot",
+      "graphemes": [
+        "l",
+        "o",
+        "t"
+      ],
+      "phonemes": [
+        "l",
+        "o",
+        "t"
+      ],
+      "level": 1
+    },
+    {
+      "word": "lit",
+      "graphemes": [
+        "l",
+        "i",
+        "t"
+      ],
+      "phonemes": [
+        "l",
+        "i",
+        "t"
+      ],
+      "level": 1
+    },
+    {
+      "word": "rat",
+      "graphemes": [
+        "r",
+        "a",
+        "t"
+      ],
+      "phonemes": [
+        "r",
+        "a",
+        "t"
+      ],
+      "level": 1,
+      "emoji": "🐀"
+    },
+    {
+      "word": "ram",
+      "graphemes": [
+        "r",
+        "a",
+        "m"
+      ],
+      "phonemes": [
+        "r",
+        "a",
+        "m"
+      ],
+      "level": 1,
+      "emoji": "🐏"
+    },
+    {
+      "word": "rap",
+      "graphemes": [
+        "r",
+        "a",
+        "p"
+      ],
+      "phonemes": [
+        "r",
+        "a",
+        "p"
+      ],
+      "level": 1
+    },
+    {
+      "word": "rag",
+      "graphemes": [
+        "r",
+        "a",
+        "g"
+      ],
+      "phonemes": [
+        "r",
+        "a",
+        "g"
+      ],
+      "level": 1
+    },
+    {
+      "word": "rug",
+      "graphemes": [
+        "r",
+        "u",
+        "g"
+      ],
+      "phonemes": [
+        "r",
+        "u",
+        "g"
+      ],
+      "level": 1
+    },
+    {
+      "word": "run",
+      "graphemes": [
+        "r",
+        "u",
+        "n"
+      ],
+      "phonemes": [
+        "r",
+        "u",
+        "n"
+      ],
+      "level": 1,
+      "emoji": "🏃"
+    },
+    {
+      "word": "rub",
+      "graphemes": [
+        "r",
+        "u",
+        "b"
+      ],
+      "phonemes": [
+        "r",
+        "u",
+        "b"
+      ],
+      "level": 1
+    },
+    {
+      "word": "rip",
+      "graphemes": [
+        "r",
+        "i",
+        "p"
+      ],
+      "phonemes": [
+        "r",
+        "i",
+        "p"
+      ],
+      "level": 1
+    },
+    {
+      "word": "rid",
+      "graphemes": [
+        "r",
+        "i",
+        "d"
+      ],
+      "phonemes": [
+        "r",
+        "i",
+        "d"
+      ],
+      "level": 1
+    },
+    {
+      "word": "red",
+      "graphemes": [
+        "r",
+        "e",
+        "d"
+      ],
+      "phonemes": [
+        "r",
+        "e",
+        "d"
+      ],
+      "level": 1,
+      "emoji": "🔴"
+    },
+    {
+      "word": "rim",
+      "graphemes": [
+        "r",
+        "i",
+        "m"
+      ],
+      "phonemes": [
+        "r",
+        "i",
+        "m"
+      ],
+      "level": 1
+    },
+    {
+      "word": "rot",
+      "graphemes": [
+        "r",
+        "o",
+        "t"
+      ],
+      "phonemes": [
+        "r",
+        "o",
+        "t"
+      ],
+      "level": 1
+    },
+    {
+      "word": "rod",
+      "graphemes": [
+        "r",
+        "o",
+        "d"
+      ],
+      "phonemes": [
+        "r",
+        "o",
+        "d"
+      ],
+      "level": 1
+    },
+    {
+      "word": "rib",
+      "graphemes": [
+        "r",
+        "i",
+        "b"
+      ],
+      "phonemes": [
+        "r",
+        "i",
+        "b"
+      ],
+      "level": 1
+    },
+    {
+      "word": "tap",
+      "graphemes": [
+        "t",
+        "a",
+        "p"
+      ],
+      "phonemes": [
+        "t",
+        "a",
+        "p"
+      ],
+      "level": 2
+    },
+    {
+      "word": "pan",
+      "graphemes": [
+        "p",
+        "a",
+        "n"
+      ],
+      "phonemes": [
+        "p",
+        "a",
+        "n"
+      ],
+      "level": 2
+    },
+    {
+      "word": "cat",
+      "graphemes": [
+        "c",
+        "a",
+        "t"
+      ],
+      "phonemes": [
+        "k",
+        "a",
+        "t"
+      ],
+      "level": 2,
+      "emoji": "🐱"
+    },
+    {
+      "word": "hat",
+      "graphemes": [
+        "h",
+        "a",
+        "t"
+      ],
+      "phonemes": [
+        "h",
+        "a",
+        "t"
+      ],
+      "level": 2,
+      "emoji": "🎩"
+    },
+    {
+      "word": "bed",
+      "graphemes": [
+        "b",
+        "e",
+        "d"
+      ],
+      "phonemes": [
+        "b",
+        "e",
+        "d"
+      ],
+      "level": 2,
+      "emoji": "🛏️"
+    },
+    {
+      "word": "pig",
+      "graphemes": [
+        "p",
+        "i",
+        "g"
+      ],
+      "phonemes": [
+        "p",
+        "i",
+        "g"
+      ],
+      "level": 2,
+      "emoji": "🐷"
+    },
+    {
+      "word": "bus",
+      "graphemes": [
+        "b",
+        "u",
+        "s"
+      ],
+      "phonemes": [
+        "b",
+        "u",
+        "s"
+      ],
+      "level": 2,
+      "emoji": "🚌"
+    },
+    {
+      "word": "cup",
+      "graphemes": [
+        "c",
+        "u",
+        "p"
+      ],
+      "phonemes": [
+        "k",
+        "u",
+        "p"
+      ],
+      "level": 2,
+      "emoji": "🥤"
+    },
+    {
+      "word": "hop",
+      "graphemes": [
+        "h",
+        "o",
+        "p"
+      ],
+      "phonemes": [
+        "h",
+        "o",
+        "p"
+      ],
+      "level": 2
+    },
+    {
+      "word": "top",
+      "graphemes": [
+        "t",
+        "o",
+        "p"
+      ],
+      "phonemes": [
+        "t",
+        "o",
+        "p"
+      ],
+      "level": 2
+    },
+    {
+      "word": "tip",
+      "graphemes": [
+        "t",
+        "i",
+        "p"
+      ],
+      "phonemes": [
+        "t",
+        "i",
+        "p"
+      ],
+      "level": 2
+    },
+    {
+      "word": "tin",
+      "graphemes": [
+        "t",
+        "i",
+        "n"
+      ],
+      "phonemes": [
+        "t",
+        "i",
+        "n"
+      ],
+      "level": 2
+    },
+    {
+      "word": "ten",
+      "graphemes": [
+        "t",
+        "e",
+        "n"
+      ],
+      "phonemes": [
+        "t",
+        "e",
+        "n"
+      ],
+      "level": 2,
+      "emoji": "🔟"
+    },
+    {
+      "word": "pen",
+      "graphemes": [
+        "p",
+        "e",
+        "n"
+      ],
+      "phonemes": [
+        "p",
+        "e",
+        "n"
+      ],
+      "level": 2,
+      "emoji": "🖊️"
+    },
+    {
+      "word": "pin",
+      "graphemes": [
+        "p",
+        "i",
+        "n"
+      ],
+      "phonemes": [
+        "p",
+        "i",
+        "n"
+      ],
+      "level": 2,
+      "emoji": "📌"
+    },
+    {
+      "word": "pot",
+      "graphemes": [
+        "p",
+        "o",
+        "t"
+      ],
+      "phonemes": [
+        "p",
+        "o",
+        "t"
+      ],
+      "level": 2
+    },
+    {
+      "word": "pit",
+      "graphemes": [
+        "p",
+        "i",
+        "t"
+      ],
+      "phonemes": [
+        "p",
+        "i",
+        "t"
+      ],
+      "level": 2
+    },
+    {
+      "word": "pat",
+      "graphemes": [
+        "p",
+        "a",
+        "t"
+      ],
+      "phonemes": [
+        "p",
+        "a",
+        "t"
+      ],
+      "level": 2
+    },
+    {
+      "word": "pad",
+      "graphemes": [
+        "p",
+        "a",
+        "d"
+      ],
+      "phonemes": [
+        "p",
+        "a",
+        "d"
+      ],
+      "level": 2
+    },
+    {
+      "word": "dig",
+      "graphemes": [
+        "d",
+        "i",
+        "g"
+      ],
+      "phonemes": [
+        "d",
+        "i",
+        "g"
+      ],
+      "level": 2
+    },
+    {
+      "word": "dot",
+      "graphemes": [
+        "d",
+        "o",
+        "t"
+      ],
+      "phonemes": [
+        "d",
+        "o",
+        "t"
+      ],
+      "level": 2
+    },
+    {
+      "word": "dip",
+      "graphemes": [
+        "d",
+        "i",
+        "p"
+      ],
+      "phonemes": [
+        "d",
+        "i",
+        "p"
+      ],
+      "level": 2
+    },
+    {
+      "word": "dug",
+      "graphemes": [
+        "d",
+        "u",
+        "g"
+      ],
+      "phonemes": [
+        "d",
+        "u",
+        "g"
+      ],
+      "level": 2
+    },
+    {
+      "word": "cap",
+      "graphemes": [
+        "c",
+        "a",
+        "p"
+      ],
+      "phonemes": [
+        "k",
+        "a",
+        "p"
+      ],
+      "level": 2,
+      "emoji": "🧢"
+    },
+    {
+      "word": "cot",
+      "graphemes": [
+        "c",
+        "o",
+        "t"
+      ],
+      "phonemes": [
+        "k",
+        "o",
+        "t"
+      ],
+      "level": 2
+    },
+    {
+      "word": "cut",
+      "graphemes": [
+        "c",
+        "u",
+        "t"
+      ],
+      "phonemes": [
+        "k",
+        "u",
+        "t"
+      ],
+      "level": 2
+    },
+    {
+      "word": "can",
+      "graphemes": [
+        "c",
+        "a",
+        "n"
+      ],
+      "phonemes": [
+        "k",
+        "a",
+        "n"
+      ],
+      "level": 2
+    },
+    {
+      "word": "cab",
+      "graphemes": [
+        "c",
+        "a",
+        "b"
+      ],
+      "phonemes": [
+        "k",
+        "a",
+        "b"
+      ],
+      "level": 2
+    },
+    {
+      "word": "bat",
+      "graphemes": [
+        "b",
+        "a",
+        "t"
+      ],
+      "phonemes": [
+        "b",
+        "a",
+        "t"
+      ],
+      "level": 2,
+      "emoji": "🦇"
+    },
+    {
+      "word": "bag",
+      "graphemes": [
+        "b",
+        "a",
+        "g"
+      ],
+      "phonemes": [
+        "b",
+        "a",
+        "g"
+      ],
+      "level": 2
+    },
+    {
+      "word": "big",
+      "graphemes": [
+        "b",
+        "i",
+        "g"
+      ],
+      "phonemes": [
+        "b",
+        "i",
+        "g"
+      ],
+      "level": 2
+    },
+    {
+      "word": "bit",
+      "graphemes": [
+        "b",
+        "i",
+        "t"
+      ],
+      "phonemes": [
+        "b",
+        "i",
+        "t"
+      ],
+      "level": 2
+    },
+    {
+      "word": "bin",
+      "graphemes": [
+        "b",
+        "i",
+        "n"
+      ],
+      "phonemes": [
+        "b",
+        "i",
+        "n"
+      ],
+      "level": 2,
+      "emoji": "🗑️"
+    },
+    {
+      "word": "bug",
+      "graphemes": [
+        "b",
+        "u",
+        "g"
+      ],
+      "phonemes": [
+        "b",
+        "u",
+        "g"
+      ],
+      "level": 2,
+      "emoji": "🐛"
+    },
+    {
+      "word": "bun",
+      "graphemes": [
+        "b",
+        "u",
+        "n"
+      ],
+      "phonemes": [
+        "b",
+        "u",
+        "n"
+      ],
+      "level": 2
+    },
+    {
+      "word": "bad",
+      "graphemes": [
+        "b",
+        "a",
+        "d"
+      ],
+      "phonemes": [
+        "b",
+        "a",
+        "d"
+      ],
+      "level": 2
+    },
+    {
+      "word": "beg",
+      "graphemes": [
+        "b",
+        "e",
+        "g"
+      ],
+      "phonemes": [
+        "b",
+        "e",
+        "g"
+      ],
+      "level": 2
+    },
+    {
+      "word": "bet",
+      "graphemes": [
+        "b",
+        "e",
+        "t"
+      ],
+      "phonemes": [
+        "b",
+        "e",
+        "t"
+      ],
+      "level": 2
+    },
+    {
+      "word": "bib",
+      "graphemes": [
+        "b",
+        "i",
+        "b"
+      ],
+      "phonemes": [
+        "b",
+        "i",
+        "b"
+      ],
+      "level": 2
+    },
+    {
+      "word": "jam",
+      "graphemes": [
+        "j",
+        "a",
+        "m"
+      ],
+      "phonemes": [
+        "j",
+        "a",
+        "m"
+      ],
+      "level": 2
+    },
+    {
+      "word": "jet",
+      "graphemes": [
+        "j",
+        "e",
+        "t"
+      ],
+      "phonemes": [
+        "j",
+        "e",
+        "t"
+      ],
+      "level": 2
+    },
+    {
+      "word": "jug",
+      "graphemes": [
+        "j",
+        "u",
+        "g"
+      ],
+      "phonemes": [
+        "j",
+        "u",
+        "g"
+      ],
+      "level": 2
+    },
+    {
+      "word": "jab",
+      "graphemes": [
+        "j",
+        "a",
+        "b"
+      ],
+      "phonemes": [
+        "j",
+        "a",
+        "b"
+      ],
+      "level": 2
+    },
+    {
+      "word": "hen",
+      "graphemes": [
+        "h",
+        "e",
+        "n"
+      ],
+      "phonemes": [
+        "h",
+        "e",
+        "n"
+      ],
+      "level": 2
+    },
+    {
+      "word": "hit",
+      "graphemes": [
+        "h",
+        "i",
+        "t"
+      ],
+      "phonemes": [
+        "h",
+        "i",
+        "t"
+      ],
+      "level": 2
+    },
+    {
+      "word": "hot",
+      "graphemes": [
+        "h",
+        "o",
+        "t"
+      ],
+      "phonemes": [
+        "h",
+        "o",
+        "t"
+      ],
+      "level": 2
+    },
+    {
+      "word": "hug",
+      "graphemes": [
+        "h",
+        "u",
+        "g"
+      ],
+      "phonemes": [
+        "h",
+        "u",
+        "g"
+      ],
+      "level": 2,
+      "emoji": "🤗"
+    },
+    {
+      "word": "hum",
+      "graphemes": [
+        "h",
+        "u",
+        "m"
+      ],
+      "phonemes": [
+        "h",
+        "u",
+        "m"
+      ],
+      "level": 2
+    },
+    {
+      "word": "ham",
+      "graphemes": [
+        "h",
+        "a",
+        "m"
+      ],
+      "phonemes": [
+        "h",
+        "a",
+        "m"
+      ],
+      "level": 2
+    },
+    {
+      "word": "hip",
+      "graphemes": [
+        "h",
+        "i",
+        "p"
+      ],
+      "phonemes": [
+        "h",
+        "i",
+        "p"
+      ],
+      "level": 2
+    },
+    {
+      "word": "hid",
+      "graphemes": [
+        "h",
+        "i",
+        "d"
+      ],
+      "phonemes": [
+        "h",
+        "i",
+        "d"
+      ],
+      "level": 2
+    },
+    {
+      "word": "had",
+      "graphemes": [
+        "h",
+        "a",
+        "d"
+      ],
+      "phonemes": [
+        "h",
+        "a",
+        "d"
+      ],
+      "level": 2
+    },
+    {
+      "word": "gap",
+      "graphemes": [
+        "g",
+        "a",
+        "p"
+      ],
+      "phonemes": [
+        "g",
+        "a",
+        "p"
+      ],
+      "level": 2
+    },
+    {
+      "word": "gas",
+      "graphemes": [
+        "g",
+        "a",
+        "s"
+      ],
+      "phonemes": [
+        "g",
+        "a",
+        "s"
+      ],
+      "level": 2,
+      "emoji": "⛽"
+    },
+    {
+      "word": "get",
+      "graphemes": [
+        "g",
+        "e",
+        "t"
+      ],
+      "phonemes": [
+        "g",
+        "e",
+        "t"
+      ],
+      "level": 2
+    },
+    {
+      "word": "gum",
+      "graphemes": [
+        "g",
+        "u",
+        "m"
+      ],
+      "phonemes": [
+        "g",
+        "u",
+        "m"
+      ],
+      "level": 2
+    },
+    {
+      "word": "tub",
+      "graphemes": [
+        "t",
+        "u",
+        "b"
+      ],
+      "phonemes": [
+        "t",
+        "u",
+        "b"
+      ],
+      "level": 2
+    },
+    {
+      "word": "tug",
+      "graphemes": [
+        "t",
+        "u",
+        "g"
+      ],
+      "phonemes": [
+        "t",
+        "u",
+        "g"
+      ],
+      "level": 2
+    },
+    {
+      "word": "tag",
+      "graphemes": [
+        "t",
+        "a",
+        "g"
+      ],
+      "phonemes": [
+        "t",
+        "a",
+        "g"
+      ],
+      "level": 2
+    },
+    {
+      "word": "tan",
+      "graphemes": [
+        "t",
+        "a",
+        "n"
+      ],
+      "phonemes": [
+        "t",
+        "a",
+        "n"
+      ],
+      "level": 2
+    },
+    {
+      "word": "hut",
+      "graphemes": [
+        "h",
+        "u",
+        "t"
+      ],
+      "phonemes": [
+        "h",
+        "u",
+        "t"
+      ],
+      "level": 2,
+      "emoji": "🛖"
+    },
+    {
+      "word": "stop",
+      "graphemes": [
+        "s",
+        "t",
+        "o",
+        "p"
+      ],
+      "phonemes": [
+        "s",
+        "t",
+        "o",
+        "p"
+      ],
+      "level": 3,
+      "emoji": "🛑"
+    },
+    {
+      "word": "flag",
+      "graphemes": [
+        "f",
+        "l",
+        "a",
+        "g"
+      ],
+      "phonemes": [
+        "f",
+        "l",
+        "a",
+        "g"
+      ],
+      "level": 3
+    },
+    {
+      "word": "lamp",
+      "graphemes": [
+        "l",
+        "a",
+        "m",
+        "p"
+      ],
+      "phonemes": [
+        "l",
+        "a",
+        "m",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "nest",
+      "graphemes": [
+        "n",
+        "e",
+        "s",
+        "t"
+      ],
+      "phonemes": [
+        "n",
+        "e",
+        "s",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "hand",
+      "graphemes": [
+        "h",
+        "a",
+        "n",
+        "d"
+      ],
+      "phonemes": [
+        "h",
+        "a",
+        "n",
+        "d"
+      ],
+      "level": 3,
+      "emoji": "✋"
+    },
+    {
+      "word": "tent",
+      "graphemes": [
+        "t",
+        "e",
+        "n",
+        "t"
+      ],
+      "phonemes": [
+        "t",
+        "e",
+        "n",
+        "t"
+      ],
+      "level": 3,
+      "emoji": "⛺"
+    },
+    {
+      "word": "drum",
+      "graphemes": [
+        "d",
+        "r",
+        "u",
+        "m"
+      ],
+      "phonemes": [
+        "d",
+        "r",
+        "u",
+        "m"
+      ],
+      "level": 3,
+      "emoji": "🥁"
+    },
+    {
+      "word": "crab",
+      "graphemes": [
+        "c",
+        "r",
+        "a",
+        "b"
+      ],
+      "phonemes": [
+        "k",
+        "r",
+        "a",
+        "b"
+      ],
+      "level": 3,
+      "emoji": "🦀"
+    },
+    {
+      "word": "plan",
+      "graphemes": [
+        "p",
+        "l",
+        "a",
+        "n"
+      ],
+      "phonemes": [
+        "p",
+        "l",
+        "a",
+        "n"
+      ],
+      "level": 3
+    },
+    {
+      "word": "plum",
+      "graphemes": [
+        "p",
+        "l",
+        "u",
+        "m"
+      ],
+      "phonemes": [
+        "p",
+        "l",
+        "u",
+        "m"
+      ],
+      "level": 3
+    },
+    {
+      "word": "plug",
+      "graphemes": [
+        "p",
+        "l",
+        "u",
+        "g"
+      ],
+      "phonemes": [
+        "p",
+        "l",
+        "u",
+        "g"
+      ],
+      "level": 3
+    },
+    {
+      "word": "slip",
+      "graphemes": [
+        "s",
+        "l",
+        "i",
+        "p"
+      ],
+      "phonemes": [
+        "s",
+        "l",
+        "i",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "slap",
+      "graphemes": [
+        "s",
+        "l",
+        "a",
+        "p"
+      ],
+      "phonemes": [
+        "s",
+        "l",
+        "a",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "snap",
+      "graphemes": [
+        "s",
+        "n",
+        "a",
+        "p"
+      ],
+      "phonemes": [
+        "s",
+        "n",
+        "a",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "spin",
+      "graphemes": [
+        "s",
+        "p",
+        "i",
+        "n"
+      ],
+      "phonemes": [
+        "s",
+        "p",
+        "i",
+        "n"
+      ],
+      "level": 3
+    },
+    {
+      "word": "spot",
+      "graphemes": [
+        "s",
+        "p",
+        "o",
+        "t"
+      ],
+      "phonemes": [
+        "s",
+        "p",
+        "o",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "step",
+      "graphemes": [
+        "s",
+        "t",
+        "e",
+        "p"
+      ],
+      "phonemes": [
+        "s",
+        "t",
+        "e",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "swim",
+      "graphemes": [
+        "s",
+        "w",
+        "i",
+        "m"
+      ],
+      "phonemes": [
+        "s",
+        "w",
+        "i",
+        "m"
+      ],
+      "level": 3,
+      "emoji": "🏊"
+    },
+    {
+      "word": "trip",
+      "graphemes": [
+        "t",
+        "r",
+        "i",
+        "p"
+      ],
+      "phonemes": [
+        "t",
+        "r",
+        "i",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "trap",
+      "graphemes": [
+        "t",
+        "r",
+        "a",
+        "p"
+      ],
+      "phonemes": [
+        "t",
+        "r",
+        "a",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "drip",
+      "graphemes": [
+        "d",
+        "r",
+        "i",
+        "p"
+      ],
+      "phonemes": [
+        "d",
+        "r",
+        "i",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "drop",
+      "graphemes": [
+        "d",
+        "r",
+        "o",
+        "p"
+      ],
+      "phonemes": [
+        "d",
+        "r",
+        "o",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "drag",
+      "graphemes": [
+        "d",
+        "r",
+        "a",
+        "g"
+      ],
+      "phonemes": [
+        "d",
+        "r",
+        "a",
+        "g"
+      ],
+      "level": 3
+    },
+    {
+      "word": "grin",
+      "graphemes": [
+        "g",
+        "r",
+        "i",
+        "n"
+      ],
+      "phonemes": [
+        "g",
+        "r",
+        "i",
+        "n"
+      ],
+      "level": 3
+    },
+    {
+      "word": "grab",
+      "graphemes": [
+        "g",
+        "r",
+        "a",
+        "b"
+      ],
+      "phonemes": [
+        "g",
+        "r",
+        "a",
+        "b"
+      ],
+      "level": 3
+    },
+    {
+      "word": "grip",
+      "graphemes": [
+        "g",
+        "r",
+        "i",
+        "p"
+      ],
+      "phonemes": [
+        "g",
+        "r",
+        "i",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "clap",
+      "graphemes": [
+        "c",
+        "l",
+        "a",
+        "p"
+      ],
+      "phonemes": [
+        "k",
+        "l",
+        "a",
+        "p"
+      ],
+      "level": 3,
+      "emoji": "👏"
+    },
+    {
+      "word": "clip",
+      "graphemes": [
+        "c",
+        "l",
+        "i",
+        "p"
+      ],
+      "phonemes": [
+        "k",
+        "l",
+        "i",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "club",
+      "graphemes": [
+        "c",
+        "l",
+        "u",
+        "b"
+      ],
+      "phonemes": [
+        "k",
+        "l",
+        "u",
+        "b"
+      ],
+      "level": 3
+    },
+    {
+      "word": "flap",
+      "graphemes": [
+        "f",
+        "l",
+        "a",
+        "p"
+      ],
+      "phonemes": [
+        "f",
+        "l",
+        "a",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "flip",
+      "graphemes": [
+        "f",
+        "l",
+        "i",
+        "p"
+      ],
+      "phonemes": [
+        "f",
+        "l",
+        "i",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "flat",
+      "graphemes": [
+        "f",
+        "l",
+        "a",
+        "t"
+      ],
+      "phonemes": [
+        "f",
+        "l",
+        "a",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "glad",
+      "graphemes": [
+        "g",
+        "l",
+        "a",
+        "d"
+      ],
+      "phonemes": [
+        "g",
+        "l",
+        "a",
+        "d"
+      ],
+      "level": 3
+    },
+    {
+      "word": "blot",
+      "graphemes": [
+        "b",
+        "l",
+        "o",
+        "t"
+      ],
+      "phonemes": [
+        "b",
+        "l",
+        "o",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "crib",
+      "graphemes": [
+        "c",
+        "r",
+        "i",
+        "b"
+      ],
+      "phonemes": [
+        "k",
+        "r",
+        "i",
+        "b"
+      ],
+      "level": 3
+    },
+    {
+      "word": "crop",
+      "graphemes": [
+        "c",
+        "r",
+        "o",
+        "p"
+      ],
+      "phonemes": [
+        "k",
+        "r",
+        "o",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "gift",
+      "graphemes": [
+        "g",
+        "i",
+        "f",
+        "t"
+      ],
+      "phonemes": [
+        "g",
+        "i",
+        "f",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "lift",
+      "graphemes": [
+        "l",
+        "i",
+        "f",
+        "t"
+      ],
+      "phonemes": [
+        "l",
+        "i",
+        "f",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "list",
+      "graphemes": [
+        "l",
+        "i",
+        "s",
+        "t"
+      ],
+      "phonemes": [
+        "l",
+        "i",
+        "s",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "pest",
+      "graphemes": [
+        "p",
+        "e",
+        "s",
+        "t"
+      ],
+      "phonemes": [
+        "p",
+        "e",
+        "s",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "rest",
+      "graphemes": [
+        "r",
+        "e",
+        "s",
+        "t"
+      ],
+      "phonemes": [
+        "r",
+        "e",
+        "s",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "test",
+      "graphemes": [
+        "t",
+        "e",
+        "s",
+        "t"
+      ],
+      "phonemes": [
+        "t",
+        "e",
+        "s",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "vest",
+      "graphemes": [
+        "v",
+        "e",
+        "s",
+        "t"
+      ],
+      "phonemes": [
+        "v",
+        "e",
+        "s",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "best",
+      "graphemes": [
+        "b",
+        "e",
+        "s",
+        "t"
+      ],
+      "phonemes": [
+        "b",
+        "e",
+        "s",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "belt",
+      "graphemes": [
+        "b",
+        "e",
+        "l",
+        "t"
+      ],
+      "phonemes": [
+        "b",
+        "e",
+        "l",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "bent",
+      "graphemes": [
+        "b",
+        "e",
+        "n",
+        "t"
+      ],
+      "phonemes": [
+        "b",
+        "e",
+        "n",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "bend",
+      "graphemes": [
+        "b",
+        "e",
+        "n",
+        "d"
+      ],
+      "phonemes": [
+        "b",
+        "e",
+        "n",
+        "d"
+      ],
+      "level": 3
+    },
+    {
+      "word": "band",
+      "graphemes": [
+        "b",
+        "a",
+        "n",
+        "d"
+      ],
+      "phonemes": [
+        "b",
+        "a",
+        "n",
+        "d"
+      ],
+      "level": 3
+    },
+    {
+      "word": "sand",
+      "graphemes": [
+        "s",
+        "a",
+        "n",
+        "d"
+      ],
+      "phonemes": [
+        "s",
+        "a",
+        "n",
+        "d"
+      ],
+      "level": 3
+    },
+    {
+      "word": "send",
+      "graphemes": [
+        "s",
+        "e",
+        "n",
+        "d"
+      ],
+      "phonemes": [
+        "s",
+        "e",
+        "n",
+        "d"
+      ],
+      "level": 3
+    },
+    {
+      "word": "land",
+      "graphemes": [
+        "l",
+        "a",
+        "n",
+        "d"
+      ],
+      "phonemes": [
+        "l",
+        "a",
+        "n",
+        "d"
+      ],
+      "level": 3
+    },
+    {
+      "word": "pond",
+      "graphemes": [
+        "p",
+        "o",
+        "n",
+        "d"
+      ],
+      "phonemes": [
+        "p",
+        "o",
+        "n",
+        "d"
+      ],
+      "level": 3
+    },
+    {
+      "word": "pump",
+      "graphemes": [
+        "p",
+        "u",
+        "m",
+        "p"
+      ],
+      "phonemes": [
+        "p",
+        "u",
+        "m",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "jump",
+      "graphemes": [
+        "j",
+        "u",
+        "m",
+        "p"
+      ],
+      "phonemes": [
+        "j",
+        "u",
+        "m",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "bump",
+      "graphemes": [
+        "b",
+        "u",
+        "m",
+        "p"
+      ],
+      "phonemes": [
+        "b",
+        "u",
+        "m",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "camp",
+      "graphemes": [
+        "c",
+        "a",
+        "m",
+        "p"
+      ],
+      "phonemes": [
+        "k",
+        "a",
+        "m",
+        "p"
+      ],
+      "level": 3,
+      "emoji": "🏕️"
+    },
+    {
+      "word": "damp",
+      "graphemes": [
+        "d",
+        "a",
+        "m",
+        "p"
+      ],
+      "phonemes": [
+        "d",
+        "a",
+        "m",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "dump",
+      "graphemes": [
+        "d",
+        "u",
+        "m",
+        "p"
+      ],
+      "phonemes": [
+        "d",
+        "u",
+        "m",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "hump",
+      "graphemes": [
+        "h",
+        "u",
+        "m",
+        "p"
+      ],
+      "phonemes": [
+        "h",
+        "u",
+        "m",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "limp",
+      "graphemes": [
+        "l",
+        "i",
+        "m",
+        "p"
+      ],
+      "phonemes": [
+        "l",
+        "i",
+        "m",
+        "p"
+      ],
+      "level": 3
+    },
+    {
+      "word": "dust",
+      "graphemes": [
+        "d",
+        "u",
+        "s",
+        "t"
+      ],
+      "phonemes": [
+        "d",
+        "u",
+        "s",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "must",
+      "graphemes": [
+        "m",
+        "u",
+        "s",
+        "t"
+      ],
+      "phonemes": [
+        "m",
+        "u",
+        "s",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "fist",
+      "graphemes": [
+        "f",
+        "i",
+        "s",
+        "t"
+      ],
+      "phonemes": [
+        "f",
+        "i",
+        "s",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "hunt",
+      "graphemes": [
+        "h",
+        "u",
+        "n",
+        "t"
+      ],
+      "phonemes": [
+        "h",
+        "u",
+        "n",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "hint",
+      "graphemes": [
+        "h",
+        "i",
+        "n",
+        "t"
+      ],
+      "phonemes": [
+        "h",
+        "i",
+        "n",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "mint",
+      "graphemes": [
+        "m",
+        "i",
+        "n",
+        "t"
+      ],
+      "phonemes": [
+        "m",
+        "i",
+        "n",
+        "t"
+      ],
+      "level": 3
+    },
+    {
+      "word": "ship",
+      "graphemes": [
+        "sh",
+        "i",
+        "p"
+      ],
+      "phonemes": [
+        "sh",
+        "i",
+        "p"
+      ],
+      "level": 4,
+      "emoji": "🚢"
+    },
+    {
+      "word": "shop",
+      "graphemes": [
+        "sh",
+        "o",
+        "p"
+      ],
+      "phonemes": [
+        "sh",
+        "o",
+        "p"
+      ],
+      "level": 4
+    },
+    {
+      "word": "shed",
+      "graphemes": [
+        "sh",
+        "e",
+        "d"
+      ],
+      "phonemes": [
+        "sh",
+        "e",
+        "d"
+      ],
+      "level": 4
+    },
+    {
+      "word": "shut",
+      "graphemes": [
+        "sh",
+        "u",
+        "t"
+      ],
+      "phonemes": [
+        "sh",
+        "u",
+        "t"
+      ],
+      "level": 4
+    },
+    {
+      "word": "shin",
+      "graphemes": [
+        "sh",
+        "i",
+        "n"
+      ],
+      "phonemes": [
+        "sh",
+        "i",
+        "n"
+      ],
+      "level": 4
+    },
+    {
+      "word": "shot",
+      "graphemes": [
+        "sh",
+        "o",
+        "t"
+      ],
+      "phonemes": [
+        "sh",
+        "o",
+        "t"
+      ],
+      "level": 4
+    },
+    {
+      "word": "fish",
+      "graphemes": [
+        "f",
+        "i",
+        "sh"
+      ],
+      "phonemes": [
+        "f",
+        "i",
+        "sh"
+      ],
+      "level": 4,
+      "emoji": "🐟"
+    },
+    {
+      "word": "dish",
+      "graphemes": [
+        "d",
+        "i",
+        "sh"
+      ],
+      "phonemes": [
+        "d",
+        "i",
+        "sh"
+      ],
+      "level": 4
+    },
+    {
+      "word": "wish",
+      "graphemes": [
+        "w",
+        "i",
+        "sh"
+      ],
+      "phonemes": [
+        "w",
+        "i",
+        "sh"
+      ],
+      "level": 4
+    },
+    {
+      "word": "bash",
+      "graphemes": [
+        "b",
+        "a",
+        "sh"
+      ],
+      "phonemes": [
+        "b",
+        "a",
+        "sh"
+      ],
+      "level": 4
+    },
+    {
+      "word": "cash",
+      "graphemes": [
+        "c",
+        "a",
+        "sh"
+      ],
+      "phonemes": [
+        "k",
+        "a",
+        "sh"
+      ],
+      "level": 4
+    },
+    {
+      "word": "mash",
+      "graphemes": [
+        "m",
+        "a",
+        "sh"
+      ],
+      "phonemes": [
+        "m",
+        "a",
+        "sh"
+      ],
+      "level": 4
+    },
+    {
+      "word": "rash",
+      "graphemes": [
+        "r",
+        "a",
+        "sh"
+      ],
+      "phonemes": [
+        "r",
+        "a",
+        "sh"
+      ],
+      "level": 4
+    },
+    {
+      "word": "dash",
+      "graphemes": [
+        "d",
+        "a",
+        "sh"
+      ],
+      "phonemes": [
+        "d",
+        "a",
+        "sh"
+      ],
+      "level": 4
+    },
+    {
+      "word": "rush",
+      "graphemes": [
+        "r",
+        "u",
+        "sh"
+      ],
+      "phonemes": [
+        "r",
+        "u",
+        "sh"
+      ],
+      "level": 4
+    },
+    {
+      "word": "hush",
+      "graphemes": [
+        "h",
+        "u",
+        "sh"
+      ],
+      "phonemes": [
+        "h",
+        "u",
+        "sh"
+      ],
+      "level": 4
+    },
+    {
+      "word": "gush",
+      "graphemes": [
+        "g",
+        "u",
+        "sh"
+      ],
+      "phonemes": [
+        "g",
+        "u",
+        "sh"
+      ],
+      "level": 4
+    },
+    {
+      "word": "chip",
+      "graphemes": [
+        "ch",
+        "i",
+        "p"
+      ],
+      "phonemes": [
+        "ch",
+        "i",
+        "p"
+      ],
+      "level": 4
+    },
+    {
+      "word": "chin",
+      "graphemes": [
+        "ch",
+        "i",
+        "n"
+      ],
+      "phonemes": [
+        "ch",
+        "i",
+        "n"
+      ],
+      "level": 4
+    },
+    {
+      "word": "chop",
+      "graphemes": [
+        "ch",
+        "o",
+        "p"
+      ],
+      "phonemes": [
+        "ch",
+        "o",
+        "p"
+      ],
+      "level": 4
+    },
+    {
+      "word": "chat",
+      "graphemes": [
+        "ch",
+        "a",
+        "t"
+      ],
+      "phonemes": [
+        "ch",
+        "a",
+        "t"
+      ],
+      "level": 4
+    },
+    {
+      "word": "chap",
+      "graphemes": [
+        "ch",
+        "a",
+        "p"
+      ],
+      "phonemes": [
+        "ch",
+        "a",
+        "p"
+      ],
+      "level": 4
+    },
+    {
+      "word": "chug",
+      "graphemes": [
+        "ch",
+        "u",
+        "g"
+      ],
+      "phonemes": [
+        "ch",
+        "u",
+        "g"
+      ],
+      "level": 4
+    },
+    {
+      "word": "chum",
+      "graphemes": [
+        "ch",
+        "u",
+        "m"
+      ],
+      "phonemes": [
+        "ch",
+        "u",
+        "m"
+      ],
+      "level": 4
+    },
+    {
+      "word": "rich",
+      "graphemes": [
+        "r",
+        "i",
+        "ch"
+      ],
+      "phonemes": [
+        "r",
+        "i",
+        "ch"
+      ],
+      "level": 4
+    },
+    {
+      "word": "much",
+      "graphemes": [
+        "m",
+        "u",
+        "ch"
+      ],
+      "phonemes": [
+        "m",
+        "u",
+        "ch"
+      ],
+      "level": 4
+    },
+    {
+      "word": "such",
+      "graphemes": [
+        "s",
+        "u",
+        "ch"
+      ],
+      "phonemes": [
+        "s",
+        "u",
+        "ch"
+      ],
+      "level": 4
+    },
+    {
+      "word": "bath",
+      "graphemes": [
+        "b",
+        "a",
+        "th"
+      ],
+      "phonemes": [
+        "b",
+        "a",
+        "th_unvoiced"
+      ],
+      "level": 4,
+      "emoji": "🛁"
+    },
+    {
+      "word": "path",
+      "graphemes": [
+        "p",
+        "a",
+        "th"
+      ],
+      "phonemes": [
+        "p",
+        "a",
+        "th_unvoiced"
+      ],
+      "level": 4
+    },
+    {
+      "word": "math",
+      "graphemes": [
+        "m",
+        "a",
+        "th"
+      ],
+      "phonemes": [
+        "m",
+        "a",
+        "th_unvoiced"
+      ],
+      "level": 4
+    },
+    {
+      "word": "thin",
+      "graphemes": [
+        "th",
+        "i",
+        "n"
+      ],
+      "phonemes": [
+        "th_unvoiced",
+        "i",
+        "n"
+      ],
+      "level": 4
+    },
+    {
+      "word": "thud",
+      "graphemes": [
+        "th",
+        "u",
+        "d"
+      ],
+      "phonemes": [
+        "th_unvoiced",
+        "u",
+        "d"
+      ],
+      "level": 4
+    },
+    {
+      "word": "ring",
+      "graphemes": [
+        "r",
+        "i",
+        "ng"
+      ],
+      "phonemes": [
+        "r",
+        "i",
+        "ng"
+      ],
+      "level": 4,
+      "emoji": "💍"
+    },
+    {
+      "word": "sing",
+      "graphemes": [
+        "s",
+        "i",
+        "ng"
+      ],
+      "phonemes": [
+        "s",
+        "i",
+        "ng"
+      ],
+      "level": 4
+    },
+    {
+      "word": "wing",
+      "graphemes": [
+        "w",
+        "i",
+        "ng"
+      ],
+      "phonemes": [
+        "w",
+        "i",
+        "ng"
+      ],
+      "level": 4
+    },
+    {
+      "word": "ping",
+      "graphemes": [
+        "p",
+        "i",
+        "ng"
+      ],
+      "phonemes": [
+        "p",
+        "i",
+        "ng"
+      ],
+      "level": 4
+    },
+    {
+      "word": "rung",
+      "graphemes": [
+        "r",
+        "u",
+        "ng"
+      ],
+      "phonemes": [
+        "r",
+        "u",
+        "ng"
+      ],
+      "level": 4
+    },
+    {
+      "word": "sung",
+      "graphemes": [
+        "s",
+        "u",
+        "ng"
+      ],
+      "phonemes": [
+        "s",
+        "u",
+        "ng"
+      ],
+      "level": 4
+    },
+    {
+      "word": "hung",
+      "graphemes": [
+        "h",
+        "u",
+        "ng"
+      ],
+      "phonemes": [
+        "h",
+        "u",
+        "ng"
+      ],
+      "level": 4
+    },
+    {
+      "word": "lung",
+      "graphemes": [
+        "l",
+        "u",
+        "ng"
+      ],
+      "phonemes": [
+        "l",
+        "u",
+        "ng"
+      ],
+      "level": 4
+    },
+    {
+      "word": "fox",
+      "graphemes": [
+        "f",
+        "o",
+        "x"
+      ],
+      "phonemes": [
+        "f",
+        "o",
+        "x"
+      ],
+      "level": 4,
+      "emoji": "🦊"
+    },
+    {
+      "word": "box",
+      "graphemes": [
+        "b",
+        "o",
+        "x"
+      ],
+      "phonemes": [
+        "b",
+        "o",
+        "x"
+      ],
+      "level": 4,
+      "emoji": "📦"
+    },
+    {
+      "word": "six",
+      "graphemes": [
+        "s",
+        "i",
+        "x"
+      ],
+      "phonemes": [
+        "s",
+        "i",
+        "x"
+      ],
+      "level": 4
+    },
+    {
+      "word": "mix",
+      "graphemes": [
+        "m",
+        "i",
+        "x"
+      ],
+      "phonemes": [
+        "m",
+        "i",
+        "x"
+      ],
+      "level": 4
+    },
+    {
+      "word": "fix",
+      "graphemes": [
+        "f",
+        "i",
+        "x"
+      ],
+      "phonemes": [
+        "f",
+        "i",
+        "x"
+      ],
+      "level": 4
+    },
+    {
+      "word": "wax",
+      "graphemes": [
+        "w",
+        "a",
+        "x"
+      ],
+      "phonemes": [
+        "w",
+        "a",
+        "x"
+      ],
+      "level": 4
+    },
+    {
+      "word": "tax",
+      "graphemes": [
+        "t",
+        "a",
+        "x"
+      ],
+      "phonemes": [
+        "t",
+        "a",
+        "x"
+      ],
+      "level": 4
+    },
+    {
+      "word": "ox",
+      "graphemes": [
+        "o",
+        "x"
+      ],
+      "phonemes": [
+        "o",
+        "x"
+      ],
+      "level": 4,
+      "emoji": "🐂"
+    },
+    {
+      "word": "quit",
+      "graphemes": [
+        "qu",
+        "i",
+        "t"
+      ],
+      "phonemes": [
+        "qu",
+        "i",
+        "t"
+      ],
+      "level": 4
+    },
+    {
+      "word": "quiz",
+      "graphemes": [
+        "qu",
+        "i",
+        "z"
+      ],
+      "phonemes": [
+        "qu",
+        "i",
+        "z"
+      ],
+      "level": 4
+    }
+  ]
+}
