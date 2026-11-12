@@ -1,9 +1,27 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/*.js": { "maxDuration": 15, "memory": 1024, "includeFiles": "{data/sounds.json,data/reading.json,js/syncdoc.js,js/logic.js}" }
+    "api/*.js": {
+      "maxDuration": 15,
+      "memory": 1024,
+      "includeFiles": "{data/sounds.json,data/reading.json,js/syncdoc.js,js/logic.js}"
+    }
   },
   "headers": [
-    { "source": "/api/(.*)", "headers": [{ "key": "cache-control", "value": "no-store" }] }
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "cache-control",
+          "value": "no-store"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/tv.apk",
+      "destination": "/tv-app/dist/first-sounds-tv.apk"
+    }
   ]
 }

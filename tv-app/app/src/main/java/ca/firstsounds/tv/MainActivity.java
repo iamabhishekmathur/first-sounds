@@ -257,8 +257,25 @@ public class MainActivity extends Activity {
         }
     }
 
-    @Override protected void onResume() { super.onResume(); webView.onResume(); }
-    @Override protected void onPause() { webView.onPause(); super.onPause(); }
+    // Reload when the app comes back after a while in the background, so the TV picks up
+    // new versions of the site without a force-stop. A short pause (under 10 minutes) keeps
+    // the current page, so a game in progress is not interrupted.
+    private static final long RELOAD_AFTER_MS = 10 * 60 * 1000L;
+    private long pausedAt = 0L;
+
+    @Override protected void onResume() {
+        super.onResume();
+        webView.onResume();
+        if (pausedAt > 0 && android.os.SystemClock.elapsedRealtime() - pausedAt > RELOAD_AFTER_MS) {
+            webView.reload();
+        }
+        pausedAt = 0L;
+    }
+    @Override protected void onPause() {
+        pausedAt = android.os.SystemClock.elapsedRealtime();
+        webView.onPause();
+        super.onPause();
+    }
 
     @Override
     protected void onDestroy() {

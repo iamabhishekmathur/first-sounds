@@ -105,6 +105,18 @@ of the reading file deployed with them, so redeploy after adding words). Upload 
 or `screenshots/`) as a production deployment, either with `vercel deploy --prod` or with
 `POST https://api.vercel.com/v13/deployments` (files inline, `target: "production"`).
 
+`scripts/deploy.sh` does all of that from the committed code (`git archive HEAD`), and also serves
+the TV app as `/tv.apk` from `tv-app/dist/first-sounds-tv.apk`:
+
+```sh
+VERCEL_TOKEN=... scripts/deploy.sh             # preview (test storage via DATA_PREFIX)
+VERCEL_TOKEN=... scripts/deploy.sh production  # production
+```
+
+Commit first: uncommitted changes are not deployed. If the GitHub repo is connected to the Vercel
+project, pushing to `main` deploys production on its own; `vercel.json` rewrites `/tv.apk` to
+`tv-app/dist/first-sounds-tv.apk`, so the TV download link works with either route.
+
 Locally, `node tests/server.mjs` also serves a fake of the API (an in-memory store, using the same
 `api/_lib/core.js`). It accepts the code in `$FAMILY_CODE`, or `local-test-code-11` by default.
 
